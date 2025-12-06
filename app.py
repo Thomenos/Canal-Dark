@@ -90,6 +90,12 @@ ATIVAR_GIF_CTA = True  # True para ativar overlay de GIF quando o texto pedir pa
 
 
 
+# Efeito de Pulso/Respiração
+
+ATIVAR_EFEITO_PULSO = False  # False = MUITO mais rápido! True = mais atmosférico
+
+
+
 # YouTube Upload
 
 FAZER_UPLOAD_YOUTUBE = True  # True para fazer upload automático, False para não
@@ -817,11 +823,13 @@ async def criar_video_longo():
             # Centraliza crop 16:9
             clip_background = clip_background.crop(x1=clip_background.w/2 - RESOLUCAO_LARGURA/2, y1=0, width=RESOLUCAO_LARGURA, height=RESOLUCAO_ALTURA)
 
-            # 🌟 APLICA EFEITO DE PULSO/RESPIRAÇÃO
-            print(f"   -> Aplicando efeito de pulso atmosférico...")
-            clip_background = efeito_pulso(clip_background, intensidade=0.03, velocidade=10)
-
-            print(f"   -> Background configurado: {tempo_restante:.1f}s (com efeito de pulso)")
+            # 🌟 APLICA EFEITO DE PULSO/RESPIRAÇÃO (SE ATIVADO)
+            if ATIVAR_EFEITO_PULSO:
+                print(f"   -> Aplicando efeito de pulso atmosférico...")
+                clip_background = efeito_pulso(clip_background, intensidade=0.03, velocidade=10)
+                print(f"   -> Background configurado: {tempo_restante:.1f}s (com efeito de pulso)")
+            else:
+                print(f"   -> Background configurado: {tempo_restante:.1f}s (estático - renderização RÁPIDA!)")
 
  
 
