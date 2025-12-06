@@ -1,0 +1,135 @@
+🔐 COMO CONFIGURAR SUA CHAVE GEMINI (SEGURA)
+==============================================
+
+⚠️ SUA CHAVE FOI VAZADA NO GITHUB!
+Você precisa REVOGAR a chave antiga e criar uma nova.
+
+═══════════════════════════════════════════════════════════
+
+🚨 PASSO 1: REVOGAR CHAVE ANTIGA (IMPORTANTE!)
+
+1. Acesse: https://aistudio.google.com/app/apikey
+2. Encontre sua chave: AIzaSyAnXVzjOqmpminxO22SP4bJkJc6X0EYyIE
+3. Clique em DELETE/APAGAR
+4. Confirme a exclusão
+
+⚠️ A chave vazou publicamente no GitHub, qualquer um pode usar!
+
+═══════════════════════════════════════════════════════════
+
+✅ PASSO 2: CRIAR NOVA CHAVE
+
+1. Acesse: https://aistudio.google.com/app/apikey
+2. Clique em "Create API Key" ou "Criar chave de API"
+3. Escolha um projeto ou crie novo
+4. Copie a nova chave (começa com AIza...)
+
+═══════════════════════════════════════════════════════════
+
+🔧 PASSO 3: CONFIGURAR NO CÓDIGO (SEM COMMITAR!)
+
+Opção A - Editar arquivo localmente (RECOMENDADO):
+
+1. Abra app.py no VS Code
+2. Linha 33, mude de:
+   CHAVE_GEMINI = "COLE_SUA_CHAVE_AQUI"
+
+   Para:
+   CHAVE_GEMINI = "SUA_NOVA_CHAVE_AQUI"
+
+3. Salve (Ctrl+S)
+4. NÃO commite esta mudança no git!
+
+═══════════════════════════════════════════════════════════
+
+Opção B - Usar variável de ambiente (AVANÇADO):
+
+Windows PowerShell:
+```powershell
+$env:GEMINI_API_KEY = "SUA_NOVA_CHAVE_AQUI"
+python app.py
+```
+
+Windows CMD:
+```cmd
+set GEMINI_API_KEY=SUA_NOVA_CHAVE_AQUI
+python app.py
+```
+
+E mude o código para:
+```python
+import os
+CHAVE_GEMINI = os.getenv("GEMINI_API_KEY", "COLE_SUA_CHAVE_AQUI")
+```
+
+═══════════════════════════════════════════════════════════
+
+⚠️ NUNCA FAÇA ISSO:
+
+❌ git add app.py (se mudou a chave)
+❌ git commit (se mudou a chave)
+❌ git push (se mudou a chave)
+❌ Compartilhar screenshots com a chave visível
+❌ Postar código com chave em fóruns/Discord
+
+═══════════════════════════════════════════════════════════
+
+✅ SEMPRE FAÇA ISSO:
+
+✅ Mantenha chaves só no seu computador
+✅ Use .gitignore para proteger arquivos sensíveis
+✅ Revoque chaves vazadas imediatamente
+✅ Use variáveis de ambiente quando possível
+
+═══════════════════════════════════════════════════════════
+
+🔍 COMO VERIFICAR SE ESTÁ SEGURO:
+
+1. No VS Code, veja a aba "Source Control" (Ctrl+Shift+G)
+2. Se app.py aparecer como modificado COM SUA CHAVE
+3. NÃO clique em commit!
+4. Clique com botão direito → "Discard Changes" OU
+5. Use: git checkout app.py (para desfazer)
+
+═══════════════════════════════════════════════════════════
+
+📝 RESUMO RÁPIDO:
+
+1. ❌ Revogue chave antiga: AIzaSyAnXVzjOqmpminxO22SP4bJkJc6X0EYyIE
+2. ✅ Crie nova chave em: https://aistudio.google.com/app/apikey
+3. ✅ Cole no app.py linha 33 (SÓ LOCALMENTE)
+4. ✅ Teste: python app.py
+5. ❌ NUNCA commite app.py com sua chave!
+
+═══════════════════════════════════════════════════════════
+
+🆘 SE JÁ COMMITOU A CHAVE:
+
+1. Revogue a chave IMEDIATAMENTE
+2. Crie nova chave
+3. Use: git reset --soft HEAD~1 (desfaz último commit)
+4. Ou edite e faça novo commit sem a chave
+
+═══════════════════════════════════════════════════════════
+
+💡 DICA PRO:
+
+Crie um arquivo chamado "config_local.py" com suas chaves:
+```python
+CHAVE_GEMINI = "sua_chave_aqui"
+```
+
+Adicione ao .gitignore:
+```
+config_local.py
+```
+
+No app.py:
+```python
+try:
+    from config_local import CHAVE_GEMINI
+except:
+    CHAVE_GEMINI = "COLE_SUA_CHAVE_AQUI"
+```
+
+Assim suas chaves ficam separadas e protegidas! 🔒

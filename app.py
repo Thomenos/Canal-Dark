@@ -30,7 +30,7 @@ import pickle
 
 # --- ⚙️ CONFIGURAÇÕES ---
 
-CHAVE_GEMINI = "AIzaSyAnXVzjOqmpminxO22SP4bJkJc6X0EYyIE" # Se for usar geração de texto automática
+CHAVE_GEMINI = "COLE_SUA_CHAVE_AQUI"  # ⚠️ NUNCA commite sua chave! Coloque só localmente
 
 ARQUIVO_TEXTO = "historia.txt"
 
@@ -928,7 +928,7 @@ async def criar_video_longo():
             GIF_INSCRICAO,
             timestamps_cta,
             duracao_gif=3.0,  # GIF fica 3 segundos na tela
-            posicao="canto"   # Pode mudar para "centro" ou "baixo"
+            posicao="centro"  # Centro da tela (mais chamativo!)
         )
     elif ATIVAR_GIF_CTA and not timestamps_cta:
         print("\n⚠️ Nenhum CTA detectado no áudio. GIF não será adicionado.")
