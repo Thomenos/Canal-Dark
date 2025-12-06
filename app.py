@@ -50,6 +50,14 @@ VOZ = "en-US-BrianMultilingualNeural"
 
 
 
+# GIF de Call-to-Action (CTA)
+
+GIF_INSCRICAO = "inscricao.gif"  # Caminho para o GIF de inscrição
+
+ATIVAR_GIF_CTA = True  # True para ativar overlay de GIF quando o texto pedir para se inscrever
+
+
+
 # YouTube Upload
 
 FAZER_UPLOAD_YOUTUBE = True  # True para fazer upload automático, False para não
@@ -150,6 +158,138 @@ def efeito_pulso(clip, intensidade=0.05, velocidade=8):
             return resultado
 
     return clip.fl(fazer_pulso)
+
+
+
+def detectar_momentos_cta(texto):
+    """
+    Detecta momentos no texto onde há chamadas para ação (CTA).
+    Retorna lista de frases que contêm CTAs.
+    """
+    cta_palavras = [
+        "inscreva",
+        "inscreve",
+        "inscrição",
+        "se inscrever",
+        "deixe seu like",
+        "curtir",
+        "compartilhe",
+        "compartilhar",
+        "ative o sino",
+        "notificações"
+    ]
+
+    # Divide o texto em frases (por ponto final, exclamação ou interrogação)
+    import re
+    frases = re.split(r'[.!?]+', texto.lower())
+
+    momentos_cta = []
+    for frase in frases:
+        for palavra_cta in cta_palavras:
+            if palavra_cta in frase:
+                momentos_cta.append(frase.strip())
+                break  # Evita duplicatas da mesma frase
+
+    return momentos_cta
+
+
+
+async def gerar_audio_com_timestamps(texto, arquivo_saida):
+    """
+    Gera áudio e captura os timestamps das palavras.
+    Retorna uma lista de timestamps onde aparecem CTAs.
+    """
+    print("   -> Gerando áudio com timestamps...")
+
+    comunicacao = edge_tts.Communicate(texto, VOZ)
+    submaker = edge_tts.SubMaker()
+
+    # Salva o áudio e captura os timestamps
+    with open(arquivo_saida, "wb") as arquivo:
+        async for chunk in comunicacao.stream():
+            if chunk["type"] == "audio":
+                arquivo.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
+
+    # Detecta palavras-chave de CTA
+    cta_palavras = [
+        "inscreva", "inscreve", "inscrição", "inscrever",
+        "like", "curtir", "compartilhe", "compartilhar",
+        "sino", "notificações"
+    ]
+
+    timestamps_cta = []
+    for sub in submaker.subs:
+        palavra = sub[1].lower()
+        for cta in cta_palavras:
+            if cta in palavra:
+                # Converte de nanosegundos para segundos
+                tempo_seg = sub[0][0] / 10_000_000.0
+                timestamps_cta.append(tempo_seg)
+                print(f"   -> CTA detectado em {tempo_seg:.1f}s: '{sub[1]}'")
+                break
+
+    return timestamps_cta
+
+
+
+def adicionar_gif_overlay(video_clip, gif_path, timestamps, duracao_gif=3.0, posicao="canto"):
+    """
+    Adiciona GIF como overlay no vídeo nos timestamps especificados.
+
+    posicao: "canto" (superior direito), "centro", "baixo"
+    duracao_gif: quanto tempo o GIF fica na tela (em segundos)
+    """
+    if not os.path.exists(gif_path):
+        print(f"⚠️ GIF não encontrado: {gif_path}")
+        return video_clip
+
+    if not timestamps:
+        print("   -> Nenhum CTA detectado, pulando overlay de GIF")
+        return video_clip
+
+    print(f"   -> Adicionando GIF em {len(timestamps)} momento(s)...")
+
+    # Carrega o GIF
+    try:
+        gif_clip = VideoFileClip(gif_path, has_mask=True)
+
+        # Redimensiona o GIF (não muito grande)
+        gif_clip = gif_clip.resize(width=300)
+
+        # Define a posição
+        if posicao == "canto":
+            # Canto superior direito
+            gif_clip = gif_clip.set_position((1920 - 320, 20))
+        elif posicao == "centro":
+            # Centro da tela
+            gif_clip = gif_clip.set_position("center")
+        elif posicao == "baixo":
+            # Centro inferior
+            gif_clip = gif_clip.set_position(("center", 1080 - gif_clip.h - 50))
+
+        # Cria um clip de GIF para cada timestamp
+        gif_overlays = []
+        for timestamp in timestamps:
+            # Define quando o GIF aparece e desaparece
+            gif_temp = gif_clip.copy()
+            gif_temp = gif_temp.set_start(timestamp).set_duration(duracao_gif)
+
+            # Adiciona fade in/out suave
+            gif_temp = gif_temp.crossfadein(0.3).crossfadeout(0.3)
+
+            gif_overlays.append(gif_temp)
+
+        # Combina o vídeo original com todos os GIFs
+        video_com_gifs = CompositeVideoClip([video_clip] + gif_overlays)
+
+        print(f"   ✅ {len(timestamps)} GIF(s) adicionado(s) com sucesso!")
+        return video_com_gifs
+
+    except Exception as e:
+        print(f"⚠️ Erro ao adicionar GIF: {e}")
+        return video_clip
 
 
 
@@ -333,9 +473,12 @@ async def criar_video_longo():
 
     # Se o áudio já existir e você não mudou o texto, ele usa o mesmo para economizar tempo
 
+    timestamps_cta = []  # Lista de timestamps onde aparecem CTAs
+
     if os.path.exists(NOME_AUDIO):
 
         print("   -> Arquivo de áudio já existe. Usando ele.")
+        print("   ⚠️ Se quiser detectar CTAs novamente, delete o arquivo de áudio.")
 
     else:
 
@@ -345,7 +488,7 @@ async def criar_video_longo():
 
             return
 
- 
+
 
         print("   -> Gerando narração longa (Isso pode demorar uns minutos)...")
 
@@ -353,13 +496,16 @@ async def criar_video_longo():
 
             texto = f.read()
 
- 
 
-        comunicacao = edge_tts.Communicate(texto, VOZ)
 
-        await comunicacao.save(NOME_AUDIO)
+        # Gera áudio COM timestamps de CTAs
+        if ATIVAR_GIF_CTA:
+            timestamps_cta = await gerar_audio_com_timestamps(texto, NOME_AUDIO)
+        else:
+            comunicacao = edge_tts.Communicate(texto, VOZ)
+            await comunicacao.save(NOME_AUDIO)
 
- 
+
 
     # Carrega áudio para saber a duração
 
@@ -565,11 +711,27 @@ async def criar_video_longo():
 
         print("   ✅ Áudio aplicado com sucesso!")
 
- 
+
+
+    # 4.5 ADICIONA GIF DE INSCRIÇÃO (SE HOUVER CTAs)
+
+    if ATIVAR_GIF_CTA and timestamps_cta:
+        print(f"\n🎨 4.5. Adicionando GIF de inscrição em {len(timestamps_cta)} momento(s)...")
+        video_final = adicionar_gif_overlay(
+            video_final,
+            GIF_INSCRICAO,
+            timestamps_cta,
+            duracao_gif=3.0,  # GIF fica 3 segundos na tela
+            posicao="canto"   # Pode mudar para "centro" ou "baixo"
+        )
+    elif ATIVAR_GIF_CTA and not timestamps_cta:
+        print("\n⚠️ Nenhum CTA detectado no áudio. GIF não será adicionado.")
+
+
 
     print(f"   -> Duração final do vídeo: {video_final.duration:.1f}s")
 
- 
+
 
     # 5. RENDERIZAÇÃO
 

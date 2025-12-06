@@ -1,0 +1,116 @@
+🎬 COMO USAR GIF DE INSCRIÇÃO AUTOMÁTICO
+==========================================
+
+O código agora detecta automaticamente quando você pede para o espectador
+se inscrever, curtir ou compartilhar, e adiciona um GIF animado no vídeo!
+
+📋 PASSO A PASSO:
+
+1. PREPARE SEU GIF
+   ---------------
+   - Crie ou baixe um GIF de "inscreva-se" (recomendado: 500x500px ou menor)
+   - Salve o arquivo como "inscricao.gif" na pasta do projeto
+   - Ou mude o caminho em app.py na linha 55: GIF_INSCRICAO = "seu_gif.gif"
+
+2. ADICIONE CHAMADAS PARA AÇÃO NO SEU TEXTO
+   ----------------------------------------
+   No seu arquivo historia.txt, adicione frases como:
+
+   ✅ "Se você gostou, não esqueça de se inscrever no canal"
+   ✅ "Inscreva-se para mais histórias de terror"
+   ✅ "Deixe seu like se você gostou"
+   ✅ "Compartilhe com seus amigos"
+   ✅ "Ative o sino de notificações"
+
+   O código detecta automaticamente essas palavras:
+   - inscreva, inscrição, se inscrever
+   - like, curtir
+   - compartilhe, compartilhar
+   - sino, notificações
+
+3. RODE O CÓDIGO NORMALMENTE
+   --------------------------
+   python app.py
+
+   O código vai:
+   - Detectar as palavras-chave no texto
+   - Capturar EXATAMENTE quando elas são narradas
+   - Adicionar o GIF naquele momento do vídeo
+   - O GIF aparece por 3 segundos com fade in/out suave
+
+⚙️ PERSONALIZAÇÕES DISPONÍVEIS:
+
+No arquivo app.py, você pode ajustar:
+
+LINHA 55-57 (Configurações):
+   GIF_INSCRICAO = "inscricao.gif"       # Caminho do seu GIF
+   ATIVAR_GIF_CTA = True                  # True = ativa, False = desativa
+
+LINHA 720-726 (Posição e duração):
+   duracao_gif=3.0    # Quanto tempo o GIF fica na tela (segundos)
+   posicao="canto"    # Opções:
+                      # "canto"  = canto superior direito
+                      # "centro" = centro da tela
+                      # "baixo"  = centro inferior
+
+📍 POSIÇÕES DO GIF:
+
+   "canto"     →  Discreto, não atrapalha o vídeo
+   ┌─────────────────────────┐
+   │                    [GIF]│
+   │                         │
+   │     SEU VÍDEO          │
+   │                         │
+   └─────────────────────────┘
+
+   "centro"    →  Mais chamativo
+   ┌─────────────────────────┐
+   │                         │
+   │       [GIF]            │
+   │                         │
+   │                         │
+   └─────────────────────────┘
+
+   "baixo"     →  Estilo YouTube comum
+   ┌─────────────────────────┐
+   │                         │
+   │     SEU VÍDEO          │
+   │                         │
+   │       [GIF]            │
+   └─────────────────────────┘
+
+💡 DICAS:
+
+✅ Use GIFs animados (não imagens estáticas PNG/JPG)
+✅ GIFs com fundo transparente ficam melhores
+✅ Tamanho recomendado: 300-500px de largura
+✅ O GIF aparece automaticamente com fade in/out suave
+✅ Você pode ter vários CTAs no texto - o GIF aparece em todos!
+
+⚠️ IMPORTANTE:
+
+- Se o arquivo de áudio já existir, delete-o para detectar CTAs novamente
+- O GIF precisa estar no formato .gif ou .mp4
+- Se o GIF não for encontrado, o vídeo é gerado normalmente (sem GIF)
+
+🔧 DESATIVAR TEMPORARIAMENTE:
+
+Para desativar sem apagar o código:
+   app.py linha 57: ATIVAR_GIF_CTA = False
+
+📝 EXEMPLO DE TEXTO COM CTA:
+
+   "Esta foi a história da casa assombrada. Espero que você tenha gostado!
+
+   Se você quer mais histórias de terror como esta, não esqueça de
+   se inscrever no canal e ativar o sino de notificações.
+
+   Deixe seu like se você curtiu e compartilhe com aquele amigo que
+   ama histórias de terror!"
+
+   → O GIF vai aparecer 3 vezes:
+      1. Quando falar "se inscrever"
+      2. Quando falar "sino" ou "notificações"
+      3. Quando falar "like" ou "compartilhe"
+
+Divirta-se! 🎉
