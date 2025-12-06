@@ -1,0 +1,66 @@
+# Credenciais e tokens (NUNCA COMMITAR!)
+client_secret.json
+token.pickle
+*.json
+
+# Vídeos e áudios gerados
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+
+# Imagens temporárias
+imagens_temp/*
+!imagens_temp/.gitkeep
+
+# Background e intro (podem ser grandes)
+background_loop/*.jpg
+background_loop/*.png
+videos_hailuo/*.mp4
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ambientes virtuais
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Arquivos temporários de edição
+temp_audio.mp3
+temp_audio.m4a
+*.tmp

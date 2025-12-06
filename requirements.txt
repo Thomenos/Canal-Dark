@@ -35,6 +35,14 @@ google-generativeai
 # API do Google Gemini para gerar histórias de terror
 # Requer chave API (configure CHAVE_GEMINI no app.py)
 
+# --- UPLOAD PARA YOUTUBE ---
+google-api-python-client
+# API oficial do YouTube para upload de vídeos
+google-auth-oauthlib
+# Autenticação OAuth2 para YouTube
+google-auth-httplib2
+# Suporte HTTP para Google Auth
+
 # --- DOWNLOAD DE IMAGENS ---
 requests
 # Biblioteca para fazer requisições HTTP
