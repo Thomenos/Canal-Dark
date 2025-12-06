@@ -629,6 +629,18 @@ async def criar_video_longo():
 
         print("   💡 Dica: Edite historia.txt para gerar um novo vídeo automaticamente!")
 
+        # IMPORTANTE: Carrega timestamps salvos anteriormente (se existirem)
+        arquivo_timestamps = NOME_AUDIO + ".timestamps"
+        if os.path.exists(arquivo_timestamps) and ATIVAR_GIF_CTA:
+            try:
+                import json
+                with open(arquivo_timestamps, 'r') as f:
+                    timestamps_cta = json.load(f)
+                if timestamps_cta:
+                    print(f"   ✅ {len(timestamps_cta)} CTA(s) carregado(s) do áudio anterior!")
+            except:
+                pass
+
     else:
 
         if texto_mudou:
@@ -652,6 +664,14 @@ async def criar_video_longo():
         if ATIVAR_GIF_CTA:
 
             timestamps_cta = await gerar_audio_com_timestamps(texto, NOME_AUDIO)
+
+            # Salva os timestamps para reutilizar depois
+            if timestamps_cta:
+                import json
+                arquivo_timestamps = NOME_AUDIO + ".timestamps"
+                with open(arquivo_timestamps, 'w') as f:
+                    json.dump(timestamps_cta, f)
+                print(f"   💾 Timestamps salvos para reutilização futura!")
 
         else:
 
