@@ -524,7 +524,7 @@ def gerar_prompt_imagem_fundo(texto_historia):
             return "dark horror atmosphere background, mysterious fog, cinematic lighting"
 
         genai.configure(api_key=CHAVE_GEMINI)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
         # Usa a história completa para análise mais precisa
         prompt = TEMPLATE_PROMPT_IMAGEM.format(historia_completa=texto_historia)
@@ -557,7 +557,7 @@ def gerar_titulo_descricao_gemini(texto_historia):
             }
 
         genai.configure(api_key=CHAVE_GEMINI)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
         # Pega os primeiros 800 caracteres da história para contexto mais rico
         resumo_historia = texto_historia[:800]
