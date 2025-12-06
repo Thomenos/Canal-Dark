@@ -330,6 +330,9 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
 
     timestamps_cta = []
 
+    # DEBUG: contador de palavras processadas
+    palavras_processadas = []
+
     # Salva o áudio e captura os timestamps em tempo real
     with open(arquivo_saida, "wb") as arquivo:
         async for chunk in comunicacao.stream():
@@ -338,6 +341,8 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
             elif chunk["type"] == "WordBoundary":
                 # Processa cada palavra em tempo real
                 palavra = chunk["text"].lower()
+                palavras_processadas.append(palavra)  # DEBUG
+
                 for cta in cta_palavras:
                     if cta in palavra:
                         # Converte de nanosegundos para segundos
@@ -345,6 +350,16 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
                         timestamps_cta.append(tempo_seg)
                         print(f"   -> CTA detectado em {tempo_seg:.1f}s: '{chunk['text']}'")
                         break
+
+    # DEBUG: Mostra palavras processadas que contêm "inscre"
+    palavras_inscre = [p for p in palavras_processadas if "inscre" in p or "inscri" in p]
+    if palavras_inscre:
+        print(f"   🔍 DEBUG - Palavras com 'inscre': {palavras_inscre}")
+    else:
+        print(f"   🔍 DEBUG - NENHUMA palavra com 'inscre' encontrada!")
+        print(f"   🔍 DEBUG - Total de palavras processadas: {len(palavras_processadas)}")
+        if len(palavras_processadas) < 20:
+            print(f"   🔍 DEBUG - Primeiras palavras: {palavras_processadas[:20]}")
 
     if timestamps_cta:
         print(f"   ✅ Total de {len(timestamps_cta)} CTA(s) detectado(s)!")
