@@ -84,7 +84,52 @@ def baixar_background_ia(tema):
 
     return None
 
- 
+
+
+def efeito_pulso(clip, intensidade=0.05, velocidade=8):
+    """
+    Aplica efeito de pulso/respiração na imagem.
+
+    intensidade: quanto a imagem vai "respirar" (0.05 = 5% de zoom)
+    velocidade: duração de cada ciclo de respiração em segundos
+    """
+    import math
+
+    def fazer_pulso(get_frame, t):
+        # Cria uma onda senoidal para o efeito de respiração
+        # math.sin varia de -1 a 1, ajustamos para 1.0 ± intensidade
+        escala = 1.0 + intensidade * math.sin(2 * math.pi * t / velocidade)
+
+        # Pega o frame atual
+        frame = get_frame(t)
+
+        # Calcula o novo tamanho
+        h, w = frame.shape[:2]
+        novo_h = int(h * escala)
+        novo_w = int(w * escala)
+
+        # Importa cv2 para resize (mais rápido que PIL para vídeos)
+        import cv2
+        frame_resized = cv2.resize(frame, (novo_w, novo_h))
+
+        # Centraliza o crop para manter 1920x1080
+        if novo_h > h or novo_w > w:
+            # Se aumentou, corta o excesso
+            start_y = (novo_h - h) // 2
+            start_x = (novo_w - w) // 2
+            return frame_resized[start_y:start_y+h, start_x:start_x+w]
+        else:
+            # Se diminuiu, adiciona padding preto
+            top = (h - novo_h) // 2
+            left = (w - novo_w) // 2
+            import numpy as np
+            resultado = np.zeros_like(frame)
+            resultado[top:top+novo_h, left:left+novo_w] = frame_resized
+            return resultado
+
+    return clip.fl(fazer_pulso)
+
+
 
 async def criar_video_longo():
 
@@ -226,13 +271,17 @@ async def criar_video_longo():
 
  
 
+            # Configura o clip base
             clip_background = img_clip.set_duration(tempo_restante).resize(height=1080).set_fps(24)
 
             # Centraliza crop 16:9
-
             clip_background = clip_background.crop(x1=clip_background.w/2 - 960, y1=0, width=1920, height=1080)
 
-            print(f"   -> Background configurado: {tempo_restante:.1f}s")
+            # 🌟 APLICA EFEITO DE PULSO/RESPIRAÇÃO
+            print(f"   -> Aplicando efeito de pulso atmosférico...")
+            clip_background = efeito_pulso(clip_background, intensidade=0.03, velocidade=10)
+
+            print(f"   -> Background configurado: {tempo_restante:.1f}s (com efeito de pulso)")
 
  
 

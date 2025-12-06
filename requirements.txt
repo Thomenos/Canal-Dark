@@ -21,6 +21,10 @@ pillow<10.0.0
 # Processamento de imagens (dependência do MoviePy)
 # Versões 10+ causam incompatibilidade com MoviePy 1.0.3
 
+opencv-python
+# Processamento de vídeo em tempo real
+# Usado para o efeito de pulso/respiração no background
+
 # --- SÍNTESE DE VOZ ---
 edge-tts
 # Geração de narração com vozes neurais da Microsoft Edge
