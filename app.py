@@ -963,6 +963,16 @@ async def criar_video_longo():
 
     print(f"   -> Preset: {PRESET_RENDERIZACAO} | Threads: {THREADS_RENDERIZACAO}")
 
+    # Parâmetros adicionais do ffmpeg para FORÇAR uso máximo da CPU
+    ffmpeg_params = [
+        "-hwaccel", "auto",  # Usa aceleração de hardware se disponível
+        "-preset", PRESET_RENDERIZACAO,
+        "-threads", str(THREADS_RENDERIZACAO),
+        "-crf", "23",  # Qualidade (23 = boa qualidade, mais rápido que 18)
+        "-movflags", "+faststart",  # Otimização para streaming
+        "-pix_fmt", "yuv420p"  # Compatibilidade máxima
+    ]
+
     video_final.write_videofile(
 
         nome_video_saida,
@@ -978,6 +988,12 @@ async def criar_video_longo():
         preset=PRESET_RENDERIZACAO,  # Usa configuração do topo do arquivo
 
         threads=THREADS_RENDERIZACAO,  # Usa configuração do topo do arquivo
+
+        ffmpeg_params=ffmpeg_params,  # Parâmetros adicionais para velocidade
+
+        write_logfile=False,  # Não gera log (mais rápido)
+
+        verbose=False,  # Menos output (mais rápido)
 
         temp_audiofile="temp_audio.mp3",  # Arquivo temporário para o áudio (MP3)
 
