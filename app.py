@@ -60,9 +60,17 @@ PASTA_BACKGROUND = "background_loop" # Pasta para o fundo do vídeo longo
 
 
 
-# Voz (Brian para narrar 1 hora é cansativo? Talvez testar outras, mas o Brian é bom)
+# Voz para narração
 
-VOZ = "en-US-BrianMultilingualNeural"
+VOZ = "pt-BR-AntonioNeural"  # Voz masculina nativa PT-BR (narração profissional)
+
+# Outras vozes PT-BR disponíveis:
+
+# pt-BR-FranciscaNeural (feminina, suave)
+
+# pt-BR-BrendaNeural (feminina, jovem)
+
+# pt-BR-DonatoNeural (masculino, grave)
 
 
 
@@ -437,6 +445,10 @@ DESCRIÇÃO: [sua descrição aqui]
         response = model.generate_content(prompt)
         resultado = response.text
 
+        # DEBUG: Mostra a resposta bruta do Gemini
+        print(f"\n🔍 DEBUG - Resposta do Gemini:")
+        print(resultado[:200] + "...\n")
+
         # Extrai título e descrição
         linhas = resultado.split('\n')
         titulo = ""
@@ -444,20 +456,29 @@ DESCRIÇÃO: [sua descrição aqui]
 
         capturando_descricao = False
         for linha in linhas:
-            if linha.startswith("TÍTULO:"):
-                titulo = linha.replace("TÍTULO:", "").strip()
-            elif linha.startswith("DESCRIÇÃO:"):
-                descricao = linha.replace("DESCRIÇÃO:", "").strip()
+            linha_upper = linha.upper()
+            if "TÍTULO" in linha_upper or "TITULO" in linha_upper:
+                titulo = linha.split(":", 1)[-1].strip()
+            elif "DESCRIÇÃO" in linha_upper or "DESCRICAO" in linha_upper:
+                descricao = linha.split(":", 1)[-1].strip()
                 capturando_descricao = True
-            elif capturando_descricao:
+            elif capturando_descricao and linha.strip():
                 descricao += "\n" + linha
+
+        # Se não encontrou com marcadores, tenta pegar do texto direto
+        if not titulo:
+            # Pega a primeira linha não vazia como título
+            for linha in linhas:
+                if linha.strip() and len(linha.strip()) > 10:
+                    titulo = linha.strip()
+                    break
 
         # Limita o título a 100 caracteres (limite do YouTube)
         if len(titulo) > 100:
             titulo = titulo[:97] + "..."
 
-        print(f"✅ Título gerado: {titulo}")
-        print(f"✅ Descrição gerada: {descricao[:100]}...")
+        print(f"✅ Título gerado: {titulo if titulo else '(vazio - usando padrão)'}")
+        print(f"✅ Descrição gerada: {descricao[:100] if descricao else '(vazia - usando padrão)'}...")
 
         return {
             "titulo": titulo if titulo else "História de Terror - Canal Dark",
