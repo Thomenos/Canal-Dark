@@ -44,11 +44,11 @@ NOME_AUDIO = "narracao_atual.mp3"  # Áudio temporário (será regenerado se tex
 
 
 
-# Renderização
+# Renderização (VELOCIDADE MÁXIMA!)
 
-PRESET_RENDERIZACAO = "faster"  # Opções: "ultrafast" (mais rápido), "faster" (rápido), "medium" (qualidade)
+PRESET_RENDERIZACAO = "ultrafast"  # MÁXIMA VELOCIDADE! Opções: "ultrafast", "veryfast", "faster", "medium"
 
-THREADS_RENDERIZACAO = 10  # Threads para usar (máx: 12 no Ryzen 5 8600G) - mais threads = mais CPU
+THREADS_RENDERIZACAO = 12  # USA TODOS OS 12 THREADS! CPU vai para ~100%
 
 
 
