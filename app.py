@@ -52,6 +52,14 @@ THREADS_RENDERIZACAO = 12  # USA TODOS OS 12 THREADS! CPU vai para ~100%
 
 
 
+# Resolução do vídeo
+
+RESOLUCAO_ALTURA = 720  # 720p (HD) ou 1080 (Full HD)
+
+RESOLUCAO_LARGURA = 1280  # Automaticamente 16:9
+
+
+
 # Pastas
 
 PASTA_VIDEOS_INTRO = "videos_hailuo" # Intro impactante
@@ -118,9 +126,9 @@ def baixar_background_ia(tema):
 
     try:
 
-        # Pede imagem Widescreen (1920x1080) para vídeo longo de YouTube
+        # Pede imagem Widescreen para vídeo longo de YouTube
 
-        url = f"https://image.pollinations.ai/prompt/{url_prompt}?width=1920&height=1080&nologo=true"
+        url = f"https://image.pollinations.ai/prompt/{url_prompt}?width={RESOLUCAO_LARGURA}&height={RESOLUCAO_ALTURA}&nologo=true"
 
         resposta = requests.get(url, timeout=60)
 
@@ -374,13 +382,13 @@ def adicionar_gif_overlay(video_clip, gif_path, timestamps, duracao_gif=3.0, pos
         # Define a posição
         if posicao == "canto":
             # Canto superior direito
-            gif_clip = gif_clip.set_position((1920 - 320, 20))
+            gif_clip = gif_clip.set_position((RESOLUCAO_LARGURA - 320, 20))
         elif posicao == "centro":
             # Centro da tela
             gif_clip = gif_clip.set_position("center")
         elif posicao == "baixo":
             # Centro inferior
-            gif_clip = gif_clip.set_position(("center", 1080 - gif_clip.h - 50))
+            gif_clip = gif_clip.set_position(("center", RESOLUCAO_ALTURA - gif_clip.h - 50))
 
         # Cria um clip de GIF para cada timestamp
         gif_overlays = []
@@ -691,13 +699,13 @@ async def criar_video_longo():
 
             try:
 
-                # Resize para 1920x1080 (Padrão YouTube)
+                # Resize para resolução configurada
 
-                clip = VideoFileClip(path).without_audio().resize(height=1080)
+                clip = VideoFileClip(path).without_audio().resize(height=RESOLUCAO_ALTURA)
 
                 # Garante que é 16:9 cortando as bordas se necessário
 
-                clip = clip.crop(x1=clip.w/2 - 960, y1=0, width=1920, height=1080)
+                clip = clip.crop(x1=clip.w/2 - RESOLUCAO_LARGURA/2, y1=0, width=RESOLUCAO_LARGURA, height=RESOLUCAO_ALTURA)
 
                 lista_clips_intro.append(clip)
 
@@ -760,10 +768,10 @@ async def criar_video_longo():
  
 
             # Configura o clip base
-            clip_background = img_clip.set_duration(tempo_restante).resize(height=1080).set_fps(24)
+            clip_background = img_clip.set_duration(tempo_restante).resize(height=RESOLUCAO_ALTURA).set_fps(24)
 
             # Centraliza crop 16:9
-            clip_background = clip_background.crop(x1=clip_background.w/2 - 960, y1=0, width=1920, height=1080)
+            clip_background = clip_background.crop(x1=clip_background.w/2 - RESOLUCAO_LARGURA/2, y1=0, width=RESOLUCAO_LARGURA, height=RESOLUCAO_ALTURA)
 
             # 🌟 APLICA EFEITO DE PULSO/RESPIRAÇÃO
             print(f"   -> Aplicando efeito de pulso atmosférico...")
