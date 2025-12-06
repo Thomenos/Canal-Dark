@@ -166,7 +166,7 @@ def gerar_titulo_descricao_gemini(texto_historia):
             }
 
         genai.configure(api_key=CHAVE_GEMINI)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
         # Pega os primeiros 500 caracteres da história
         resumo_historia = texto_historia[:500]
