@@ -314,12 +314,10 @@ def detectar_momentos_cta(texto):
 
 async def gerar_audio_com_timestamps(texto, arquivo_saida):
     """
-    Gera áudio e captura os timestamps das palavras.
-    Retorna uma lista de timestamps onde aparecem CTAs.
+    Gera áudio e detecta CTAs usando posição no texto (funciona com qualquer voz).
+    Retorna uma lista de timestamps ESTIMADOS onde aparecem CTAs.
     """
-    print("   -> Gerando áudio com timestamps...")
-
-    comunicacao = edge_tts.Communicate(texto, VOZ)
+    print("   -> Gerando áudio e detectando CTAs...")
 
     # Detecta palavras-chave de CTA
     cta_palavras = [
@@ -328,45 +326,56 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
         "sino", "notificações"
     ]
 
+    # 1. PRIMEIRO: Detecta posições dos CTAs no texto
     timestamps_cta = []
+    texto_lower = texto.lower()
 
-    # DEBUG: contador de palavras processadas
-    palavras_processadas = []
+    for cta in cta_palavras:
+        pos = 0
+        while True:
+            pos = texto_lower.find(cta, pos)
+            if pos == -1:
+                break
 
-    # Salva o áudio e captura os timestamps em tempo real
+            # Calcula em que % do texto está o CTA
+            porcentagem = pos / len(texto)
+
+            # Guarda temporariamente (vamos calcular timestamp depois)
+            timestamps_cta.append({
+                'palavra': cta,
+                'posicao': pos,
+                'porcentagem': porcentagem
+            })
+
+            print(f"   -> CTA '{cta}' encontrado em {porcentagem*100:.1f}% do texto")
+            pos += len(cta)
+
+    # 2. SEGUNDO: Gera o áudio
+    comunicacao = edge_tts.Communicate(texto, VOZ)
     with open(arquivo_saida, "wb") as arquivo:
         async for chunk in comunicacao.stream():
             if chunk["type"] == "audio":
                 arquivo.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
-                # Processa cada palavra em tempo real
-                palavra = chunk["text"].lower()
-                palavras_processadas.append(palavra)  # DEBUG
 
-                for cta in cta_palavras:
-                    if cta in palavra:
-                        # Converte de nanosegundos para segundos
-                        tempo_seg = chunk["offset"] / 10_000_000.0
-                        timestamps_cta.append(tempo_seg)
-                        print(f"   -> CTA detectado em {tempo_seg:.1f}s: '{chunk['text']}'")
-                        break
-
-    # DEBUG: Mostra palavras processadas que contêm "inscre"
-    palavras_inscre = [p for p in palavras_processadas if "inscre" in p or "inscri" in p]
-    if palavras_inscre:
-        print(f"   🔍 DEBUG - Palavras com 'inscre': {palavras_inscre}")
-    else:
-        print(f"   🔍 DEBUG - NENHUMA palavra com 'inscre' encontrada!")
-        print(f"   🔍 DEBUG - Total de palavras processadas: {len(palavras_processadas)}")
-        if len(palavras_processadas) < 20:
-            print(f"   🔍 DEBUG - Primeiras palavras: {palavras_processadas[:20]}")
-
+    # 3. TERCEIRO: Calcula timestamps baseado na duração do áudio
     if timestamps_cta:
-        print(f"   ✅ Total de {len(timestamps_cta)} CTA(s) detectado(s)!")
+        from moviepy.editor import AudioFileClip
+        audio_clip = AudioFileClip(arquivo_saida)
+        duracao_total = audio_clip.duration
+        audio_clip.close()
+
+        # Converte porcentagens em timestamps reais
+        timestamps_finais = []
+        for cta_info in timestamps_cta:
+            timestamp = cta_info['porcentagem'] * duracao_total
+            timestamps_finais.append(timestamp)
+            print(f"   ✅ CTA '{cta_info['palavra']}' em {timestamp:.1f}s ({cta_info['porcentagem']*100:.1f}% do vídeo)")
+
+        print(f"   ✅ Total de {len(timestamps_finais)} CTA(s) detectado(s)!")
+        return timestamps_finais
     else:
         print(f"   ⚠️ Nenhum CTA detectado no texto.")
-
-    return timestamps_cta
+        return []
 
 
 
