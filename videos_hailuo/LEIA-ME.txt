@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════════════════════
+   📁 PASTA DE VÍDEOS DE INTRODUÇÃO (HAILUO AI)
+═══════════════════════════════════════════════════════════════════════
+
+🎬 OBJETIVO:
+Esta pasta deve conter vídeos CURTOS (5-10 segundos) gerados por IA
+para criar uma introdução IMPACTANTE no início do seu vídeo longo.
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 INSTRUÇÕES DE USO:
+
+1. Acesse: https://hailuo.ai/ (ou outra ferramenta de vídeo IA)
+
+2. Gere vídeos curtos com prompts de terror, como:
+   - "Dark abandoned mansion at night, cinematic, horror atmosphere"
+   - "Creepy forest path with fog, mysterious shadows moving"
+   - "Old haunted room with flickering lights, eerie ambiance"
+
+3. Baixe os vídeos gerados (formato .mp4)
+
+4. RENOMEIE os arquivos seguindo ordem alfabética:
+   - intro_01.mp4
+   - intro_02.mp4
+   - intro_03.mp4
+   (O script vai usar nessa ordem!)
+
+5. Cole os arquivos .mp4 AQUI nesta pasta
+
+═══════════════════════════════════════════════════════════════════════
+
+⚡ DICAS IMPORTANTES:
+
+✅ Recomendado: 2 a 4 vídeos (total de 10-20 segundos)
+✅ Qualidade: Prefira vídeos em HD (1920x1080) ou 4K
+✅ Tema: Mantenha a atmosfera dark/terror consistente
+✅ Ordem: O nome do arquivo define a ordem de exibição
+
+❌ Evite: Vídeos muito longos (mais de 15s cada)
+❌ Evite: Vídeos com diálogos ou texto visível
+
+═══════════════════════════════════════════════════════════════════════
+
+🔧 O QUE ACONTECE NO SCRIPT:
+
+1. O script lê TODOS os arquivos .mp4 desta pasta
+2. Concatena eles em ORDEM ALFABÉTICA
+3. Remove o áudio dos vídeos (só usa narração)
+4. Ajusta para 1920x1080 (16:9)
+5. Usa como introdução do vídeo final
+
+═══════════════════════════════════════════════════════════════════════
+
+💡 ALTERNATIVAS SE NÃO USAR HAILUO:
+
+Você pode usar QUALQUER vídeo .mp4 aqui:
+- Vídeos de stock (Pexels, Pixabay)
+- Vídeos que você mesmo filmou
+- Vídeos de outras IAs (Runway, Pika Labs, etc.)
+
+O importante é que sejam arquivos .mp4 etenham tema dark/terror!
+
+═══════════════════════════════════════════════════════════════════════
+
+❓ DÚVIDAS?
+
+Se esta pasta estiver vazia, o script vai funcionar normalmente,
+mas seu vídeo começará DIRETO com a imagem de fundo estática.
+
+Para um vídeo mais profissional, recomendo adicionar pelo menos
+1 ou 2 vídeos de intro aqui!
+
+═══════════════════════════════════════════════════════════════════════

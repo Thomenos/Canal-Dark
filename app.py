@@ -164,7 +164,7 @@ async def criar_video_longo():
 
                 # Garante que é 16:9 cortando as bordas se necessário
 
-                clip = clip.crop(x_center=clip.w/2, y_center=clip.h/2, width=1920, height=1080)
+                clip = clip.crop(x1=clip.w/2 - 960, y1=0, width=1920, height=1080)
 
                 lista_clips_intro.append(clip)
 
@@ -226,11 +226,11 @@ async def criar_video_longo():
 
  
 
-            clip_background = img_clip.set_duration(tempo_restante).resize(height=1080)
+            clip_background = img_clip.set_duration(tempo_restante).resize(height=1080).set_fps(24)
 
             # Centraliza crop 16:9
 
-            clip_background = clip_background.crop(x_center=clip_background.w/2, y_center=clip_background.h/2, width=1920, height=1080)
+            clip_background = clip_background.crop(x1=clip_background.w/2 - 960, y1=0, width=1920, height=1080)
 
             print(f"   -> Background configurado: {tempo_restante:.1f}s")
 
@@ -356,7 +356,7 @@ async def criar_video_longo():
 
         codec="libx264",
 
-        audio_codec="aac",
+        audio_codec="libmp3lame",  # Codec MP3 para evitar dessincronia em vídeos longos
 
         audio_bitrate="192k",  # Garante qualidade do áudio
 
@@ -364,7 +364,7 @@ async def criar_video_longo():
 
         threads=4,
 
-        temp_audiofile="temp_audio.m4a",  # Arquivo temporário para o áudio
+        temp_audiofile="temp_audio.mp3",  # Arquivo temporário para o áudio (MP3)
 
         remove_temp=True  # Remove arquivos temporários após renderização
 
