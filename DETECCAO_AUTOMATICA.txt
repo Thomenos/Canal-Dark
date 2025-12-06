@@ -1,0 +1,245 @@
+🤖 DETECÇÃO AUTOMÁTICA DE NOVAS HISTÓRIAS
+==========================================
+
+O código agora detecta AUTOMATICAMENTE quando você muda a história
+e gera um novo vídeo sem precisar apagar nada! 🎉
+
+═══════════════════════════════════════════════════════════
+
+🎯 COMO FUNCIONA:
+
+1. Você edita o arquivo historia.txt com uma NOVA história
+2. Roda o código normalmente: python app.py
+3. O código detecta que o texto mudou
+4. Gera novo áudio automaticamente
+5. Cria um novo vídeo com nome sequencial (video_001.mp4, video_002.mp4...)
+6. Seus vídeos anteriores ficam salvos na pasta videos_gerados/
+
+SEM PRECISAR APAGAR NADA! 🚀
+
+═══════════════════════════════════════════════════════════
+
+📋 FLUXO DE TRABALHO TÍPICO:
+
+1️⃣ PRIMEIRA HISTÓRIA:
+   - Edite historia.txt com sua primeira história
+   - Rode: python app.py
+   - Resultado: videos_gerados/video_001.mp4
+
+2️⃣ SEGUNDA HISTÓRIA:
+   - Edite historia.txt com uma NOVA história
+   - Rode: python app.py (mesmo comando!)
+   - Resultado: videos_gerados/video_002.mp4
+   - O video_001.mp4 continua salvo!
+
+3️⃣ TERCEIRA HISTÓRIA:
+   - Edite historia.txt com outra história
+   - Rode: python app.py
+   - Resultado: videos_gerados/video_003.mp4
+   - Todos os vídeos anteriores continuam salvos!
+
+E assim por diante... ∞
+
+═══════════════════════════════════════════════════════════
+
+🔍 COMO O CÓDIGO DETECTA MUDANÇAS:
+
+O sistema usa um "hash" (impressão digital) do arquivo:
+
+1. Quando você gera um vídeo, o código salva um hash do texto
+   em: historia.txt.hash
+
+2. Na próxima vez que rodar, compara:
+   - Hash salvo vs Hash atual
+   - Se diferentes = NOVA HISTÓRIA! 🆕
+   - Se iguais = Reutiliza áudio anterior ♻️
+
+3. Você não precisa fazer NADA manualmente!
+
+═══════════════════════════════════════════════════════════
+
+📁 ORGANIZAÇÃO DOS ARQUIVOS:
+
+ANTES (sistema antigo):
+   /
+   ├── video_longo_final.mp4  ← Sempre sobrescrevia
+   └── narracao_longa.mp3     ← Tinha que apagar manual
+
+AGORA (sistema novo):
+   /
+   ├── historia.txt           ← Você edita aqui
+   ├── historia.txt.hash      ← Hash automático (não mexer)
+   ├── narracao_atual.mp3     ← Áudio temporário
+   └── videos_gerados/        ← Seus vídeos prontos
+       ├── video_001.mp4      ✅
+       ├── video_002.mp4      ✅
+       ├── video_003.mp4      ✅
+       └── video_004.mp4      ✅
+
+═══════════════════════════════════════════════════════════
+
+💡 VANTAGENS:
+
+✅ Nunca perde vídeos antigos
+✅ Não precisa apagar nada manualmente
+✅ Detecta mudanças automaticamente
+✅ Organização perfeita (pasta videos_gerados/)
+✅ Fácil de gerenciar múltiplas histórias
+✅ Sistema inteligente de numeração
+
+═══════════════════════════════════════════════════════════
+
+🎬 EXEMPLOS DE USO:
+
+EXEMPLO 1 - Criar vários vídeos seguidos:
+   1. Escreve história 1 em historia.txt → Roda
+   2. Escreve história 2 em historia.txt → Roda
+   3. Escreve história 3 em historia.txt → Roda
+   Resultado: 3 vídeos salvos! (video_001, video_002, video_003)
+
+EXEMPLO 2 - Corrigir uma história:
+   1. Roda o código → Gera video_001.mp4
+   2. Percebe um erro no texto
+   3. Edita historia.txt corrigindo
+   4. Roda novamente → Gera video_002.mp4 (versão corrigida)
+   Resultado: Tem as duas versões salvas!
+
+EXEMPLO 3 - Testar narração diferente:
+   1. Tem video_001.mp4 com voz Brian
+   2. Muda VOZ no app.py para outra voz
+   3. Roda novamente
+   4. Gera video_002.mp4 com voz diferente
+   Resultado: Pode comparar as duas vozes!
+
+═══════════════════════════════════════════════════════════
+
+⚙️ CONFIGURAÇÕES (app.py):
+
+LINHA 37-41:
+   ARQUIVO_HASH = "historia.txt.hash"
+   PASTA_VIDEOS = "videos_gerados"
+   NOME_AUDIO = "narracao_atual.mp3"
+
+Você pode mudar o nome da pasta se quiser:
+   PASTA_VIDEOS = "meus_videos"
+   PASTA_VIDEOS = "canal_dark_videos"
+
+═══════════════════════════════════════════════════════════
+
+🔄 QUANDO O CÓDIGO REGENERA O ÁUDIO:
+
+REGENERA (nova narração):
+✅ Quando você muda qualquer palavra em historia.txt
+✅ Quando você adiciona/remove conteúdo
+✅ Na primeira vez que roda
+
+REUTILIZA (economiza tempo):
+♻️ Quando roda o código sem mudar historia.txt
+♻️ Quando o hash é idêntico
+
+Mensagens que você vai ver:
+
+Nova história:
+   "🆕 NOVA HISTÓRIA DETECTADA! Gerando novo áudio..."
+
+História igual:
+   "-> Áudio já existe e o texto não mudou. Reutilizando áudio anterior."
+
+═══════════════════════════════════════════════════════════
+
+📊 NUMERAÇÃO INTELIGENTE:
+
+O código SEMPRE pega o próximo número disponível:
+
+Se você tem:
+   video_001.mp4
+   video_002.mp4
+   video_003.mp4
+
+E rodar de novo → video_004.mp4
+
+Se você APAGAR video_002.mp4 e rodar → video_004.mp4
+(não reutiliza números vazios, sempre incrementa)
+
+═══════════════════════════════════════════════════════════
+
+🗑️ SE QUISER COMEÇAR DO ZERO:
+
+Opção 1 - Apagar todos os vídeos:
+   Delete a pasta: videos_gerados/
+   Próximo vídeo será: video_001.mp4
+
+Opção 2 - Forçar novo áudio:
+   Delete o arquivo: historia.txt.hash
+   Próximo run vai regenerar o áudio
+
+Opção 3 - Limpar tudo:
+   Delete: videos_gerados/, historia.txt.hash, narracao_atual.mp3
+   Começa completamente do zero
+
+═══════════════════════════════════════════════════════════
+
+⚠️ IMPORTANTE:
+
+✅ Edite SEMPRE o arquivo historia.txt (não mude o nome)
+✅ NÃO apague o arquivo historia.txt.hash (é automático)
+✅ NÃO renomeie arquivos em videos_gerados/ (quebra numeração)
+✅ Faça backup da pasta videos_gerados/ se tiver vídeos importantes
+
+═══════════════════════════════════════════════════════════
+
+🚀 WORKFLOW RECOMENDADO:
+
+Para criar múltiplos vídeos por dia:
+
+1. Prepare várias histórias em arquivos separados:
+   - historia_vampiro.txt
+   - historia_floresta.txt
+   - historia_casa.txt
+
+2. Para cada uma:
+   - Copie o conteúdo para historia.txt
+   - Rode: python app.py
+   - Aguarde renderizar
+
+3. No final do dia você terá:
+   - video_001.mp4 (vampiro)
+   - video_002.mp4 (floresta)
+   - video_003.mp4 (casa)
+   Todos organizados e prontos para upload!
+
+═══════════════════════════════════════════════════════════
+
+📝 MENSAGENS DO SISTEMA:
+
+Durante a execução você verá:
+
+Primeira vez:
+   "-> Gerando narração longa (Isso pode demorar uns minutos)..."
+   "✅ Hash da história salvo para detecção automática de mudanças!"
+
+História nova:
+   "🆕 NOVA HISTÓRIA DETECTADA! Gerando novo áudio..."
+   "✅ Hash da história salvo para detecção automática de mudanças!"
+
+História igual:
+   "-> Áudio já existe e o texto não mudou. Reutilizando áudio anterior."
+   "💡 Dica: Edite historia.txt para gerar um novo vídeo automaticamente!"
+
+Ao finalizar:
+   "✅✅ VÍDEO LONGO PRONTO: videos_gerados/video_003.mp4"
+   "📁 Salvo em: videos_gerados/"
+
+═══════════════════════════════════════════════════════════
+
+🎉 PRONTO!
+
+Agora você pode criar quantos vídeos quiser sem se preocupar
+em apagar arquivos ou organizar manualmente!
+
+Apenas:
+1. Edite historia.txt
+2. Rode python app.py
+3. Aguarde seu vídeo ficar pronto!
+
+Simples assim! 🚀

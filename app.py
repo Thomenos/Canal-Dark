@@ -6,6 +6,10 @@ import os
 
 import requests
 
+import hashlib
+
+import glob
+
 import google.generativeai as genai
 
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip, concatenate_videoclips, vfx, CompositeVideoClip
@@ -30,9 +34,21 @@ CHAVE_GEMINI = "AIzaSyAnXVzjOqmpminxO22SP4bJkJc6X0EYyIE" # Se for usar geração
 
 ARQUIVO_TEXTO = "historia.txt"
 
-NOME_AUDIO = "narracao_longa.mp3"
+ARQUIVO_HASH = "historia.txt.hash"  # Salva hash do último texto processado
 
-NOME_VIDEO = "video_longo_final.mp4"
+PASTA_VIDEOS = "videos_gerados"  # Pasta onde os vídeos serão salvos
+
+NOME_AUDIO = "narracao_atual.mp3"  # Áudio temporário (será regenerado se texto mudar)
+
+# NOME_VIDEO agora é gerado automaticamente (ex: video_001.mp4, video_002.mp4)
+
+
+
+# Renderização
+
+PRESET_RENDERIZACAO = "faster"  # Opções: "ultrafast" (mais rápido), "faster" (rápido), "medium" (qualidade)
+
+THREADS_RENDERIZACAO = 10  # Threads para usar (máx: 12 no Ryzen 5 8600G) - mais threads = mais CPU
 
 
 
@@ -47,6 +63,14 @@ PASTA_BACKGROUND = "background_loop" # Pasta para o fundo do vídeo longo
 # Voz (Brian para narrar 1 hora é cansativo? Talvez testar outras, mas o Brian é bom)
 
 VOZ = "en-US-BrianMultilingualNeural"
+
+
+
+# GIF de Call-to-Action (CTA)
+
+GIF_INSCRICAO = "inscricao.gif"  # Caminho para o GIF de inscrição
+
+ATIVAR_GIF_CTA = True  # True para ativar overlay de GIF quando o texto pedir para se inscrever
 
 
 
@@ -150,6 +174,224 @@ def efeito_pulso(clip, intensidade=0.05, velocidade=8):
             return resultado
 
     return clip.fl(fazer_pulso)
+
+
+
+def calcular_hash_arquivo(caminho_arquivo):
+    """
+    Calcula o hash MD5 de um arquivo de texto.
+    Usado para detectar se o conteúdo mudou.
+    """
+    if not os.path.exists(caminho_arquivo):
+        return None
+
+    with open(caminho_arquivo, 'rb') as f:
+        conteudo = f.read()
+        return hashlib.md5(conteudo).hexdigest()
+
+
+
+def historia_mudou():
+    """
+    Verifica se o arquivo historia.txt foi modificado desde a última vez.
+    Retorna True se mudou, False se está igual.
+    """
+    hash_atual = calcular_hash_arquivo(ARQUIVO_TEXTO)
+
+    if hash_atual is None:
+        return False  # Arquivo não existe
+
+    # Verifica se existe hash salvo
+    if not os.path.exists(ARQUIVO_HASH):
+        return True  # Primeira vez, precisa gerar
+
+    # Lê o hash salvo
+    with open(ARQUIVO_HASH, 'r') as f:
+        hash_salvo = f.read().strip()
+
+    return hash_atual != hash_salvo
+
+
+
+def salvar_hash_atual():
+    """
+    Salva o hash do arquivo historia.txt atual.
+    Chamado depois de gerar o áudio com sucesso.
+    """
+    hash_atual = calcular_hash_arquivo(ARQUIVO_TEXTO)
+
+    if hash_atual:
+        with open(ARQUIVO_HASH, 'w') as f:
+            f.write(hash_atual)
+
+
+
+def gerar_proximo_nome_video():
+    """
+    Gera o próximo nome de vídeo sequencial (video_001.mp4, video_002.mp4, etc).
+    Cria a pasta videos_gerados se não existir.
+    """
+    # Cria pasta se não existir
+    if not os.path.exists(PASTA_VIDEOS):
+        os.makedirs(PASTA_VIDEOS)
+        print(f"   ✅ Pasta '{PASTA_VIDEOS}' criada!")
+
+    # Busca todos os vídeos existentes
+    videos_existentes = glob.glob(os.path.join(PASTA_VIDEOS, "video_*.mp4"))
+
+    if not videos_existentes:
+        # Primeiro vídeo
+        numero = 1
+    else:
+        # Pega o maior número existente
+        numeros = []
+        for video in videos_existentes:
+            nome = os.path.basename(video)
+            # Extrai número do nome (video_001.mp4 -> 001)
+            try:
+                num_str = nome.replace("video_", "").replace(".mp4", "")
+                numeros.append(int(num_str))
+            except:
+                pass
+
+        numero = max(numeros) + 1 if numeros else 1
+
+    # Formato: video_001.mp4, video_002.mp4, etc
+    nome_video = os.path.join(PASTA_VIDEOS, f"video_{numero:03d}.mp4")
+
+    return nome_video
+
+
+
+def detectar_momentos_cta(texto):
+    """
+    Detecta momentos no texto onde há chamadas para ação (CTA).
+    Retorna lista de frases que contêm CTAs.
+    """
+    cta_palavras = [
+        "inscreva",
+        "inscreve",
+        "inscrição",
+        "se inscrever",
+        "deixe seu like",
+        "curtir",
+        "compartilhe",
+        "compartilhar",
+        "ative o sino",
+        "notificações"
+    ]
+
+    # Divide o texto em frases (por ponto final, exclamação ou interrogação)
+    import re
+    frases = re.split(r'[.!?]+', texto.lower())
+
+    momentos_cta = []
+    for frase in frases:
+        for palavra_cta in cta_palavras:
+            if palavra_cta in frase:
+                momentos_cta.append(frase.strip())
+                break  # Evita duplicatas da mesma frase
+
+    return momentos_cta
+
+
+
+async def gerar_audio_com_timestamps(texto, arquivo_saida):
+    """
+    Gera áudio e captura os timestamps das palavras.
+    Retorna uma lista de timestamps onde aparecem CTAs.
+    """
+    print("   -> Gerando áudio com timestamps...")
+
+    comunicacao = edge_tts.Communicate(texto, VOZ)
+    submaker = edge_tts.SubMaker()
+
+    # Salva o áudio e captura os timestamps
+    with open(arquivo_saida, "wb") as arquivo:
+        async for chunk in comunicacao.stream():
+            if chunk["type"] == "audio":
+                arquivo.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
+
+    # Detecta palavras-chave de CTA
+    cta_palavras = [
+        "inscreva", "inscreve", "inscrição", "inscrever",
+        "like", "curtir", "compartilhe", "compartilhar",
+        "sino", "notificações"
+    ]
+
+    timestamps_cta = []
+    for sub in submaker.subs:
+        palavra = sub[1].lower()
+        for cta in cta_palavras:
+            if cta in palavra:
+                # Converte de nanosegundos para segundos
+                tempo_seg = sub[0][0] / 10_000_000.0
+                timestamps_cta.append(tempo_seg)
+                print(f"   -> CTA detectado em {tempo_seg:.1f}s: '{sub[1]}'")
+                break
+
+    return timestamps_cta
+
+
+
+def adicionar_gif_overlay(video_clip, gif_path, timestamps, duracao_gif=3.0, posicao="canto"):
+    """
+    Adiciona GIF como overlay no vídeo nos timestamps especificados.
+
+    posicao: "canto" (superior direito), "centro", "baixo"
+    duracao_gif: quanto tempo o GIF fica na tela (em segundos)
+    """
+    if not os.path.exists(gif_path):
+        print(f"⚠️ GIF não encontrado: {gif_path}")
+        return video_clip
+
+    if not timestamps:
+        print("   -> Nenhum CTA detectado, pulando overlay de GIF")
+        return video_clip
+
+    print(f"   -> Adicionando GIF em {len(timestamps)} momento(s)...")
+
+    # Carrega o GIF
+    try:
+        gif_clip = VideoFileClip(gif_path, has_mask=True)
+
+        # Redimensiona o GIF (não muito grande)
+        gif_clip = gif_clip.resize(width=300)
+
+        # Define a posição
+        if posicao == "canto":
+            # Canto superior direito
+            gif_clip = gif_clip.set_position((1920 - 320, 20))
+        elif posicao == "centro":
+            # Centro da tela
+            gif_clip = gif_clip.set_position("center")
+        elif posicao == "baixo":
+            # Centro inferior
+            gif_clip = gif_clip.set_position(("center", 1080 - gif_clip.h - 50))
+
+        # Cria um clip de GIF para cada timestamp
+        gif_overlays = []
+        for timestamp in timestamps:
+            # Define quando o GIF aparece e desaparece
+            gif_temp = gif_clip.copy()
+            gif_temp = gif_temp.set_start(timestamp).set_duration(duracao_gif)
+
+            # Adiciona fade in/out suave
+            gif_temp = gif_temp.crossfadein(0.3).crossfadeout(0.3)
+
+            gif_overlays.append(gif_temp)
+
+        # Combina o vídeo original com todos os GIFs
+        video_com_gifs = CompositeVideoClip([video_clip] + gif_overlays)
+
+        print(f"   ✅ {len(timestamps)} GIF(s) adicionado(s) com sucesso!")
+        return video_com_gifs
+
+    except Exception as e:
+        print(f"⚠️ Erro ao adicionar GIF: {e}")
+        return video_clip
 
 
 
@@ -329,37 +571,71 @@ async def criar_video_longo():
 
     print(f"\n📖 1. Verificando áudio...")
 
- 
 
-    # Se o áudio já existir e você não mudou o texto, ele usa o mesmo para economizar tempo
 
-    if os.path.exists(NOME_AUDIO):
+    # NOVA LÓGICA: Detecta automaticamente se o texto mudou
 
-        print("   -> Arquivo de áudio já existe. Usando ele.")
+    timestamps_cta = []  # Lista de timestamps onde aparecem CTAs
+
+    texto_mudou = historia_mudou()
+
+
+
+    if not os.path.exists(ARQUIVO_TEXTO):
+
+        print("❌ Crie o arquivo historia.txt com sua história longa!")
+
+        return
+
+
+
+    # Verifica se precisa regenerar o áudio
+
+    if os.path.exists(NOME_AUDIO) and not texto_mudou:
+
+        print("   -> Áudio já existe e o texto não mudou. Reutilizando áudio anterior.")
+
+        print("   💡 Dica: Edite historia.txt para gerar um novo vídeo automaticamente!")
 
     else:
 
-        if not os.path.exists(ARQUIVO_TEXTO):
+        if texto_mudou:
 
-            print("❌ Crie o arquivo historia.txt com sua história longa!")
+            print("   🆕 NOVA HISTÓRIA DETECTADA! Gerando novo áudio...")
 
-            return
+        else:
 
- 
+            print("   -> Gerando narração longa (Isso pode demorar uns minutos)...")
 
-        print("   -> Gerando narração longa (Isso pode demorar uns minutos)...")
+
 
         with open(ARQUIVO_TEXTO, "r", encoding="utf-8") as f:
 
             texto = f.read()
 
- 
 
-        comunicacao = edge_tts.Communicate(texto, VOZ)
 
-        await comunicacao.save(NOME_AUDIO)
+        # Gera áudio COM timestamps de CTAs
 
- 
+        if ATIVAR_GIF_CTA:
+
+            timestamps_cta = await gerar_audio_com_timestamps(texto, NOME_AUDIO)
+
+        else:
+
+            comunicacao = edge_tts.Communicate(texto, VOZ)
+
+            await comunicacao.save(NOME_AUDIO)
+
+
+
+        # Salva o hash do texto processado
+
+        salvar_hash_atual()
+
+        print("   ✅ Hash da história salvo para detecção automática de mudanças!")
+
+
 
     # Carrega áudio para saber a duração
 
@@ -565,29 +841,55 @@ async def criar_video_longo():
 
         print("   ✅ Áudio aplicado com sucesso!")
 
- 
+
+
+    # 4.5 ADICIONA GIF DE INSCRIÇÃO (SE HOUVER CTAs)
+
+    if ATIVAR_GIF_CTA and timestamps_cta:
+        print(f"\n🎨 4.5. Adicionando GIF de inscrição em {len(timestamps_cta)} momento(s)...")
+        video_final = adicionar_gif_overlay(
+            video_final,
+            GIF_INSCRICAO,
+            timestamps_cta,
+            duracao_gif=3.0,  # GIF fica 3 segundos na tela
+            posicao="canto"   # Pode mudar para "centro" ou "baixo"
+        )
+    elif ATIVAR_GIF_CTA and not timestamps_cta:
+        print("\n⚠️ Nenhum CTA detectado no áudio. GIF não será adicionado.")
+
+
 
     print(f"   -> Duração final do vídeo: {video_final.duration:.1f}s")
 
- 
+
 
     # 5. RENDERIZAÇÃO
 
     print("\n🚀 RENDERIZANDO (Isso vai demorar, vá tomar um café)...")
 
-    print(f"   -> Arquivo de saída: {NOME_VIDEO}")
 
- 
 
-    # CORREÇÃO: Usar preset "medium" em vez de "ultrafast" para melhor qualidade e compatibilidade
+    # GERA NOME AUTOMÁTICO PARA O VÍDEO (video_001.mp4, video_002.mp4, etc)
 
-    # threads=4 ajuda a usar mais núcleos do processador
+    nome_video_saida = gerar_proximo_nome_video()
 
-    # bitrate de áudio 192k garante boa qualidade
+    print(f"   -> Arquivo de saída: {nome_video_saida}")
+
+
+
+    # OTIMIZAÇÃO DE RENDERIZAÇÃO PARA MÁXIMA VELOCIDADE
+
+    # Usa configurações personalizáveis definidas no início do arquivo
+
+    # threads=10 usa quase todos os 12 threads do Ryzen 5 8600G (deixa 2 livres para o sistema)
+
+    # preset="faster" renderiza muito mais rápido que "medium" mantendo boa qualidade
+
+    print(f"   -> Preset: {PRESET_RENDERIZACAO} | Threads: {THREADS_RENDERIZACAO}")
 
     video_final.write_videofile(
 
-        NOME_VIDEO,
+        nome_video_saida,
 
         fps=24,
 
@@ -597,9 +899,9 @@ async def criar_video_longo():
 
         audio_bitrate="192k",  # Garante qualidade do áudio
 
-        preset="medium",  # Melhor que "ultrafast" para compatibilidade
+        preset=PRESET_RENDERIZACAO,  # Usa configuração do topo do arquivo
 
-        threads=4,
+        threads=THREADS_RENDERIZACAO,  # Usa configuração do topo do arquivo
 
         temp_audiofile="temp_audio.mp3",  # Arquivo temporário para o áudio (MP3)
 
@@ -621,11 +923,13 @@ async def criar_video_longo():
 
 
 
-    print(f"\n✅✅ VÍDEO LONGO PRONTO: {NOME_VIDEO}")
+    print(f"\n✅✅ VÍDEO LONGO PRONTO: {nome_video_saida}")
 
     print(f"🎬 Duração: {tempo_total/60:.2f} minutos")
 
     print(f"🔊 Áudio: Incluído e sincronizado!")
+
+    print(f"📁 Salvo em: {PASTA_VIDEOS}/")
 
 
 
@@ -661,7 +965,7 @@ async def criar_video_longo():
 
         video_url = fazer_upload_youtube(
 
-            NOME_VIDEO,
+            nome_video_saida,
 
             metadados["titulo"],
 
