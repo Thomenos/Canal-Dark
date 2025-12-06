@@ -1,0 +1,63 @@
+# ═══════════════════════════════════════════════════════════════════
+# 📦 DEPENDÊNCIAS DO PROJETO CANAL DARK
+# ═══════════════════════════════════════════════════════════════════
+#
+# Este arquivo lista todas as bibliotecas Python necessárias para
+# executar o script de geração de vídeos longos para YouTube.
+#
+# 🔧 INSTALAÇÃO:
+# Execute no terminal: pip install -r requirements.txt
+#
+# ⚠️ IMPORTANTE: Requer Python 3.11 (não use 3.14 Alpha!)
+#
+# ═══════════════════════════════════════════════════════════════════
+
+# --- EDIÇÃO DE VÍDEO ---
+moviepy==1.0.3
+# Biblioteca principal para edição de vídeo
+# Versão 1.0.3 é a mais estável para vídeos longos
+
+pillow<10.0.0
+# Processamento de imagens (dependência do MoviePy)
+# Versões 10+ causam incompatibilidade com MoviePy 1.0.3
+
+# --- SÍNTESE DE VOZ ---
+edge-tts
+# Geração de narração com vozes neurais da Microsoft Edge
+# Gratuito e de alta qualidade (voz Brian Multilingual)
+
+# --- GERAÇÃO DE ROTEIROS (OPCIONAL) ---
+google-generativeai
+# API do Google Gemini para gerar histórias de terror
+# Requer chave API (configure CHAVE_GEMINI no app.py)
+
+# --- DOWNLOAD DE IMAGENS ---
+requests
+# Biblioteca para fazer requisições HTTP
+# Usada para baixar backgrounds da API Pollinations
+
+# --- DEPENDÊNCIAS ADICIONAIS (instaladas automaticamente) ---
+# imageio-ffmpeg (para codecs de vídeo)
+# numpy (processamento numérico)
+# decorator (utilitários MoviePy)
+# proglog (barra de progresso da renderização)
+
+# ═══════════════════════════════════════════════════════════════════
+# 💡 DICAS DE INSTALAÇÃO
+# ═══════════════════════════════════════════════════════════════════
+#
+# Se encontrar erros durante a instalação:
+#
+# 1. Certifique-se de estar usando Python 3.11:
+#    python --version
+#
+# 2. Atualize o pip antes de instalar:
+#    python -m pip install --upgrade pip
+#
+# 3. No Windows, pode precisar do Visual C++ Build Tools
+#
+# 4. No Linux, instale dependências do sistema:
+#    sudo apt-get update
+#    sudo apt-get install ffmpeg
+#
+# ═══════════════════════════════════════════════════════════════════
