@@ -26,7 +26,7 @@ import pickle
 
 # --- ⚙️ CONFIGURAÇÕES ---
 
-CHAVE_GEMINI = "COLE_SUA_CHAVE_AQUI" # Se for usar geração de texto automática
+CHAVE_GEMINI = "AIzaSyAnXVzjOqmpminxO22SP4bJkJc6X0EYyIE" # Se for usar geração de texto automática
 
 ARQUIVO_TEXTO = "historia.txt"
 
@@ -166,7 +166,7 @@ def gerar_titulo_descricao_gemini(texto_historia):
             }
 
         genai.configure(api_key=CHAVE_GEMINI)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-2.0-flash')
 
         # Pega os primeiros 500 caracteres da história
         resumo_historia = texto_historia[:500]
