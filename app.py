@@ -982,7 +982,7 @@ async def criar_video_longo():
 
             print(f"\n🎉 PROCESSO COMPLETO!")
 
-            print(f"📹 Vídeo renderizado: {NOME_VIDEO}")
+            print(f"📹 Vídeo renderizado: {nome_video_saida}")
 
             print(f"🔗 YouTube: {video_url}")
 
@@ -990,7 +990,7 @@ async def criar_video_longo():
 
             print("\n⚠️  Vídeo renderizado, mas upload falhou.")
 
-            print(f"   Você pode fazer upload manual de: {NOME_VIDEO}")
+            print(f"   Você pode fazer upload manual de: {nome_video_saida}")
 
     else:
 
