@@ -304,15 +304,6 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
     print("   -> Gerando áudio com timestamps...")
 
     comunicacao = edge_tts.Communicate(texto, VOZ)
-    submaker = edge_tts.SubMaker()
-
-    # Salva o áudio e captura os timestamps
-    with open(arquivo_saida, "wb") as arquivo:
-        async for chunk in comunicacao.stream():
-            if chunk["type"] == "audio":
-                arquivo.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
-                submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
 
     # Detecta palavras-chave de CTA
     cta_palavras = [
@@ -322,15 +313,27 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
     ]
 
     timestamps_cta = []
-    for sub in submaker.subs:
-        palavra = sub[1].lower()
-        for cta in cta_palavras:
-            if cta in palavra:
-                # Converte de nanosegundos para segundos
-                tempo_seg = sub[0][0] / 10_000_000.0
-                timestamps_cta.append(tempo_seg)
-                print(f"   -> CTA detectado em {tempo_seg:.1f}s: '{sub[1]}'")
-                break
+
+    # Salva o áudio e captura os timestamps em tempo real
+    with open(arquivo_saida, "wb") as arquivo:
+        async for chunk in comunicacao.stream():
+            if chunk["type"] == "audio":
+                arquivo.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                # Processa cada palavra em tempo real
+                palavra = chunk["text"].lower()
+                for cta in cta_palavras:
+                    if cta in palavra:
+                        # Converte de nanosegundos para segundos
+                        tempo_seg = chunk["offset"] / 10_000_000.0
+                        timestamps_cta.append(tempo_seg)
+                        print(f"   -> CTA detectado em {tempo_seg:.1f}s: '{chunk['text']}'")
+                        break
+
+    if timestamps_cta:
+        print(f"   ✅ Total de {len(timestamps_cta)} CTA(s) detectado(s)!")
+    else:
+        print(f"   ⚠️ Nenhum CTA detectado no texto.")
 
     return timestamps_cta
 
