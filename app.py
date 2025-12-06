@@ -10,6 +10,18 @@ import google.generativeai as genai
 
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip, concatenate_videoclips, vfx, CompositeVideoClip
 
+# Imports para YouTube Upload
+
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+from googleapiclient.discovery import build
+
+from googleapiclient.http import MediaFileUpload
+
+from google.auth.transport.requests import Request
+
+import pickle
+
  
 
 # --- ⚙️ CONFIGURAÇÕES ---
@@ -22,7 +34,7 @@ NOME_AUDIO = "narracao_longa.mp3"
 
 NOME_VIDEO = "video_longo_final.mp4"
 
- 
+
 
 # Pastas
 
@@ -30,11 +42,21 @@ PASTA_VIDEOS_INTRO = "videos_hailuo" # Intro impactante
 
 PASTA_BACKGROUND = "background_loop" # Pasta para o fundo do vídeo longo
 
- 
+
 
 # Voz (Brian para narrar 1 hora é cansativo? Talvez testar outras, mas o Brian é bom)
 
 VOZ = "en-US-BrianMultilingualNeural"
+
+
+
+# YouTube Upload
+
+FAZER_UPLOAD_YOUTUBE = True  # True para fazer upload automático, False para não
+
+ARQUIVO_CREDENCIAIS_YOUTUBE = "client_secret.json"  # Arquivo de credenciais OAuth2
+
+SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
  
 
@@ -128,6 +150,172 @@ def efeito_pulso(clip, intensidade=0.05, velocidade=8):
             return resultado
 
     return clip.fl(fazer_pulso)
+
+
+
+def gerar_titulo_descricao_gemini(texto_historia):
+    """
+    Gera título e descrição para o vídeo usando Gemini AI.
+    """
+    try:
+        if CHAVE_GEMINI == "COLE_SUA_CHAVE_AQUI":
+            print("⚠️  Chave Gemini não configurada. Usando título padrão.")
+            return {
+                "titulo": "História de Terror - Canal Dark",
+                "descricao": "Uma narrativa sombria e atmosférica de terror.\n\n#terror #dark #história"
+            }
+
+        genai.configure(api_key=CHAVE_GEMINI)
+        model = genai.GenerativeModel('gemini-pro')
+
+        # Pega os primeiros 500 caracteres da história
+        resumo_historia = texto_historia[:500]
+
+        prompt = f"""Você é um especialista em marketing para YouTube no nicho de terror/dark.
+
+Com base nesta história de terror:
+{resumo_historia}...
+
+Gere:
+1. Um TÍTULO chamativo e otimizado para SEO (máximo 80 caracteres)
+2. Uma DESCRIÇÃO completa e envolvente (200-300 palavras) que:
+   - Desperte curiosidade sem spoilers
+   - Use palavras-chave de terror/mistério
+   - Inclua hashtags relevantes (#terror #dark #horror #creepypasta)
+   - Mencione que é narrado por IA
+
+Formato da resposta:
+TÍTULO: [seu título aqui]
+DESCRIÇÃO: [sua descrição aqui]
+"""
+
+        response = model.generate_content(prompt)
+        resultado = response.text
+
+        # Extrai título e descrição
+        linhas = resultado.split('\n')
+        titulo = ""
+        descricao = ""
+
+        capturando_descricao = False
+        for linha in linhas:
+            if linha.startswith("TÍTULO:"):
+                titulo = linha.replace("TÍTULO:", "").strip()
+            elif linha.startswith("DESCRIÇÃO:"):
+                descricao = linha.replace("DESCRIÇÃO:", "").strip()
+                capturando_descricao = True
+            elif capturando_descricao:
+                descricao += "\n" + linha
+
+        # Limita o título a 100 caracteres (limite do YouTube)
+        if len(titulo) > 100:
+            titulo = titulo[:97] + "..."
+
+        print(f"✅ Título gerado: {titulo}")
+        print(f"✅ Descrição gerada: {descricao[:100]}...")
+
+        return {
+            "titulo": titulo if titulo else "História de Terror - Canal Dark",
+            "descricao": descricao if descricao else "Uma narrativa sombria e atmosférica."
+        }
+
+    except Exception as e:
+        print(f"❌ Erro ao gerar metadados com Gemini: {e}")
+        return {
+            "titulo": "História de Terror - Canal Dark",
+            "descricao": "Uma narrativa sombria e atmosférica de terror.\n\n#terror #dark #história"
+        }
+
+
+
+def autenticar_youtube():
+    """
+    Autentica no YouTube usando OAuth2.
+    """
+    creds = None
+
+    # Verifica se já existe token salvo
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+
+    # Se não há credenciais válidas, faz login
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not os.path.exists(ARQUIVO_CREDENCIAIS_YOUTUBE):
+                print(f"❌ Arquivo {ARQUIVO_CREDENCIAIS_YOUTUBE} não encontrado!")
+                print("   Siga as instruções em YOUTUBE_SETUP.txt para configurar.")
+                return None
+
+            flow = InstalledAppFlow.from_client_secrets_file(
+                ARQUIVO_CREDENCIAIS_YOUTUBE, SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+
+        # Salva as credenciais para próxima vez
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
+
+    return build('youtube', 'v3', credentials=creds)
+
+
+
+def fazer_upload_youtube(arquivo_video, titulo, descricao):
+    """
+    Faz upload do vídeo para o YouTube como privado.
+    """
+    try:
+        print("\n📤 Iniciando upload para YouTube...")
+
+        youtube = autenticar_youtube()
+        if not youtube:
+            return None
+
+        body = {
+            'snippet': {
+                'title': titulo,
+                'description': descricao,
+                'tags': ['terror', 'dark', 'horror', 'creepypasta', 'história', 'mistério'],
+                'categoryId': '24'  # Categoria: Entretenimento
+            },
+            'status': {
+                'privacyStatus': 'private',  # PRIVADO por padrão
+                'selfDeclaredMadeForKids': False
+            }
+        }
+
+        media = MediaFileUpload(arquivo_video, chunksize=-1, resumable=True)
+
+        request = youtube.videos().insert(
+            part=','.join(body.keys()),
+            body=body,
+            media_body=media
+        )
+
+        print("   -> Fazendo upload... (Isso pode demorar)")
+
+        response = None
+        while response is None:
+            status, response = request.next_chunk()
+            if status:
+                progress = int(status.progress() * 100)
+                print(f"   -> Upload: {progress}% concluído")
+
+        video_id = response['id']
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+
+        print(f"\n✅ VÍDEO ENVIADO COM SUCESSO!")
+        print(f"🔗 URL: {video_url}")
+        print(f"🔒 Status: PRIVADO (você pode tornar público depois)")
+        print(f"📝 Título: {titulo}")
+
+        return video_url
+
+    except Exception as e:
+        print(f"\n❌ Erro ao fazer upload: {e}")
+        return None
 
 
 
@@ -431,7 +619,7 @@ async def criar_video_longo():
 
         clip.close()
 
- 
+
 
     print(f"\n✅✅ VÍDEO LONGO PRONTO: {NOME_VIDEO}")
 
@@ -439,7 +627,71 @@ async def criar_video_longo():
 
     print(f"🔊 Áudio: Incluído e sincronizado!")
 
- 
+
+
+    # 6. UPLOAD PARA YOUTUBE (OPCIONAL)
+
+    if FAZER_UPLOAD_YOUTUBE:
+
+        print("\n" + "="*60)
+
+        print("📺 UPLOAD PARA YOUTUBE")
+
+        print("="*60)
+
+
+
+        # Lê o texto da história para gerar metadados
+
+        with open(ARQUIVO_TEXTO, "r", encoding="utf-8") as f:
+
+            texto_completo = f.read()
+
+
+
+        # Gera título e descrição com Gemini
+
+        print("\n🤖 Gerando título e descrição com Gemini AI...")
+
+        metadados = gerar_titulo_descricao_gemini(texto_completo)
+
+
+
+        # Faz upload
+
+        video_url = fazer_upload_youtube(
+
+            NOME_VIDEO,
+
+            metadados["titulo"],
+
+            metadados["descricao"]
+
+        )
+
+
+
+        if video_url:
+
+            print(f"\n🎉 PROCESSO COMPLETO!")
+
+            print(f"📹 Vídeo renderizado: {NOME_VIDEO}")
+
+            print(f"🔗 YouTube: {video_url}")
+
+        else:
+
+            print("\n⚠️  Vídeo renderizado, mas upload falhou.")
+
+            print(f"   Você pode fazer upload manual de: {NOME_VIDEO}")
+
+    else:
+
+        print("\n💡 Upload para YouTube desativado.")
+
+        print(f"   Para ativar, mude FAZER_UPLOAD_YOUTUBE = True no código")
+
+
 
 if __name__ == "__main__":
 

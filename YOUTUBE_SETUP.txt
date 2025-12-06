@@ -1,0 +1,203 @@
+═══════════════════════════════════════════════════════════════════════
+   📺 CONFIGURAÇÃO DO UPLOAD AUTOMÁTICO PARA YOUTUBE
+═══════════════════════════════════════════════════════════════════════
+
+Este guia vai te ensinar a configurar o upload automático para o YouTube
+usando a API oficial do Google.
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASSO 1: CRIAR PROJETO NO GOOGLE CLOUD CONSOLE
+
+1. Acesse: https://console.cloud.google.com/
+
+2. Faça login com sua conta Google (a mesma do YouTube)
+
+3. Clique em "Selecionar um projeto" (topo da página)
+
+4. Clique em "NOVO PROJETO"
+
+5. Nome do projeto: "Canal Dark Upload"
+
+6. Clique em "CRIAR"
+
+7. Aguarde a criação (pode levar 30 segundos)
+
+8. Selecione o projeto que você acabou de criar
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASSO 2: ATIVAR A API DO YOUTUBE
+
+1. No menu lateral, vá em: "APIs e Serviços" > "Biblioteca"
+
+2. Pesquise por: "YouTube Data API v3"
+
+3. Clique no resultado "YouTube Data API v3"
+
+4. Clique em "ATIVAR"
+
+5. Aguarde a ativação
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASSO 3: CONFIGURAR TELA DE CONSENTIMENTO
+
+1. No menu lateral: "APIs e Serviços" > "Tela de consentimento OAuth"
+
+2. Selecione "Externo" (a menos que você tenha Google Workspace)
+
+3. Clique em "CRIAR"
+
+4. Preencha os campos OBRIGATÓRIOS:
+   - Nome do app: "Canal Dark Uploader"
+   - E-mail de suporte do usuário: [seu email]
+   - E-mail de contato do desenvolvedor: [seu email]
+
+5. Clique em "SALVAR E CONTINUAR"
+
+6. Na tela "Escopos", clique em "SALVAR E CONTINUAR" (não precisa adicionar)
+
+7. Na tela "Usuários de teste", clique em "+ ADD USERS"
+
+8. Adicione o EMAIL DA SUA CONTA DO YOUTUBE
+
+9. Clique em "ADICIONAR"
+
+10. Clique em "SALVAR E CONTINUAR"
+
+11. Clique em "VOLTAR PARA O PAINEL"
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASSO 4: CRIAR CREDENCIAIS OAUTH
+
+1. No menu lateral: "APIs e Serviços" > "Credenciais"
+
+2. Clique em "+ CRIAR CREDENCIAIS" (topo da página)
+
+3. Selecione "ID do cliente OAuth"
+
+4. Tipo de aplicativo: "Aplicativo para computador"
+
+5. Nome: "Canal Dark Desktop"
+
+6. Clique em "CRIAR"
+
+7. Vai aparecer uma janela com Client ID e Client Secret
+
+8. Clique em "FAZER DOWNLOAD DO JSON"
+
+9. IMPORTANTE: Renomeie o arquivo baixado para: "client_secret.json"
+
+10. Cole o arquivo "client_secret.json" na pasta do projeto Canal Dark
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASSO 5: CONFIGURAR A CHAVE DO GEMINI (OPCIONAL)
+
+Se você quiser que o Gemini gere títulos e descrições automaticamente:
+
+1. Acesse: https://aistudio.google.com/app/apikey
+
+2. Clique em "Create API Key"
+
+3. Escolha o projeto "Canal Dark Upload" (ou crie um novo)
+
+4. Copie a chave gerada
+
+5. Abra o arquivo "app.py"
+
+6. Na linha 29, cole sua chave:
+   CHAVE_GEMINI = "SUA_CHAVE_AQUI"
+
+Se não configurar, o script usará um título padrão.
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASSO 6: INSTALAR DEPENDÊNCIAS
+
+No terminal, execute:
+
+   python -m pip install -r requirements.txt
+
+Isso vai instalar:
+- google-api-python-client
+- google-auth-oauthlib
+- google-auth-httplib2
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASSO 7: TESTAR O UPLOAD
+
+1. Certifique-se que "client_secret.json" está na pasta do projeto
+
+2. Abra "app.py" e verifique:
+   FAZER_UPLOAD_YOUTUBE = True  (linha 55)
+
+3. Execute o script:
+   python app.py
+
+4. Quando o vídeo terminar de renderizar, o upload começará automaticamente
+
+5. NA PRIMEIRA VEZ, uma janela do navegador vai abrir pedindo permissão
+
+6. Faça login com a conta do YouTube
+
+7. Clique em "Permitir" para dar acesso ao app
+
+8. Volte ao terminal e veja o progresso do upload!
+
+═══════════════════════════════════════════════════════════════════════
+
+🔐 SEGURANÇA E PRIVACIDADE
+
+✅ O vídeo é enviado como PRIVADO por padrão
+✅ Só você pode ver o vídeo até você torná-lo público
+✅ Suas credenciais ficam salvas em "token.pickle" (não compartilhe!)
+✅ O arquivo "client_secret.json" é pessoal (não compartilhe!)
+
+═══════════════════════════════════════════════════════════════════════
+
+❓ PROBLEMAS COMUNS
+
+❌ Erro: "client_secret.json não encontrado"
+   Solução: Certifique-se que o arquivo está na pasta do projeto
+
+❌ Erro: "The user has not granted the app..."
+   Solução: Você precisa adicionar seu email como "usuário de teste"
+   no passo 3 da configuração
+
+❌ Erro: "Access blocked: This app's request is invalid"
+   Solução: Volte ao passo 3 e configure a tela de consentimento
+
+❌ Upload muito lento
+   Solução: Normal para vídeos de 1 hora. Pode levar 20-40 minutos.
+
+❌ Quero desativar o upload automático
+   Solução: Abra app.py e mude para: FAZER_UPLOAD_YOUTUBE = False
+
+═══════════════════════════════════════════════════════════════════════
+
+💡 DICAS
+
+✨ Após o primeiro upload, o token fica salvo. Uploads futuros não
+   precisarão de autorização novamente.
+
+✨ Você pode editar título e descrição no YouTube Studio depois do upload.
+
+✨ Para tornar o vídeo público, acesse YouTube Studio > Conteúdo >
+   Clique no vídeo > Visibilidade > Público
+
+✨ O limite de upload do YouTube é 12 horas de vídeo por dia.
+
+═══════════════════════════════════════════════════════════════════════
+
+📞 PRECISA DE AJUDA?
+
+Se algo não funcionou, verifique:
+1. client_secret.json está na pasta certa
+2. Seu email está na lista de usuários de teste
+3. YouTube Data API v3 está ativada no projeto
+
+═══════════════════════════════════════════════════════════════════════
