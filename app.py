@@ -36,6 +36,14 @@ NOME_VIDEO = "video_longo_final.mp4"
 
 
 
+# Renderização
+
+PRESET_RENDERIZACAO = "faster"  # Opções: "ultrafast" (mais rápido), "faster" (rápido), "medium" (qualidade)
+
+THREADS_RENDERIZACAO = 10  # Threads para usar (máx: 12 no Ryzen 5 8600G) - mais threads = mais CPU
+
+
+
 # Pastas
 
 PASTA_VIDEOS_INTRO = "videos_hailuo" # Intro impactante
@@ -741,11 +749,15 @@ async def criar_video_longo():
 
  
 
-    # CORREÇÃO: Usar preset "medium" em vez de "ultrafast" para melhor qualidade e compatibilidade
+    # OTIMIZAÇÃO DE RENDERIZAÇÃO PARA MÁXIMA VELOCIDADE
 
-    # threads=4 ajuda a usar mais núcleos do processador
+    # Usa configurações personalizáveis definidas no início do arquivo
 
-    # bitrate de áudio 192k garante boa qualidade
+    # threads=10 usa quase todos os 12 threads do Ryzen 5 8600G (deixa 2 livres para o sistema)
+
+    # preset="faster" renderiza muito mais rápido que "medium" mantendo boa qualidade
+
+    print(f"   -> Preset: {PRESET_RENDERIZACAO} | Threads: {THREADS_RENDERIZACAO}")
 
     video_final.write_videofile(
 
@@ -759,9 +771,9 @@ async def criar_video_longo():
 
         audio_bitrate="192k",  # Garante qualidade do áudio
 
-        preset="medium",  # Melhor que "ultrafast" para compatibilidade
+        preset=PRESET_RENDERIZACAO,  # Usa configuração do topo do arquivo
 
-        threads=4,
+        threads=THREADS_RENDERIZACAO,  # Usa configuração do topo do arquivo
 
         temp_audiofile="temp_audio.mp3",  # Arquivo temporário para o áudio (MP3)
 
