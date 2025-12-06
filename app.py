@@ -963,12 +963,9 @@ async def criar_video_longo():
 
     print(f"   -> Preset: {PRESET_RENDERIZACAO} | Threads: {THREADS_RENDERIZACAO}")
 
-    # Parâmetros adicionais do ffmpeg para FORÇAR uso máximo da CPU
+    # Parâmetros adicionais do ffmpeg para otimização
     ffmpeg_params = [
-        "-hwaccel", "auto",  # Usa aceleração de hardware se disponível
-        "-preset", PRESET_RENDERIZACAO,
-        "-threads", str(THREADS_RENDERIZACAO),
-        "-crf", "23",  # Qualidade (23 = boa qualidade, mais rápido que 18)
+        "-crf", "23",  # Qualidade (23 = boa qualidade, mais rápido)
         "-movflags", "+faststart",  # Otimização para streaming
         "-pix_fmt", "yuv420p"  # Compatibilidade máxima
     ]
