@@ -6,6 +6,10 @@ import os
 
 import requests
 
+import hashlib
+
+import glob
+
 import google.generativeai as genai
 
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip, concatenate_videoclips, vfx, CompositeVideoClip
@@ -30,9 +34,13 @@ CHAVE_GEMINI = "AIzaSyAnXVzjOqmpminxO22SP4bJkJc6X0EYyIE" # Se for usar geração
 
 ARQUIVO_TEXTO = "historia.txt"
 
-NOME_AUDIO = "narracao_longa.mp3"
+ARQUIVO_HASH = "historia.txt.hash"  # Salva hash do último texto processado
 
-NOME_VIDEO = "video_longo_final.mp4"
+PASTA_VIDEOS = "videos_gerados"  # Pasta onde os vídeos serão salvos
+
+NOME_AUDIO = "narracao_atual.mp3"  # Áudio temporário (será regenerado se texto mudar)
+
+# NOME_VIDEO agora é gerado automaticamente (ex: video_001.mp4, video_002.mp4)
 
 
 
@@ -166,6 +174,92 @@ def efeito_pulso(clip, intensidade=0.05, velocidade=8):
             return resultado
 
     return clip.fl(fazer_pulso)
+
+
+
+def calcular_hash_arquivo(caminho_arquivo):
+    """
+    Calcula o hash MD5 de um arquivo de texto.
+    Usado para detectar se o conteúdo mudou.
+    """
+    if not os.path.exists(caminho_arquivo):
+        return None
+
+    with open(caminho_arquivo, 'rb') as f:
+        conteudo = f.read()
+        return hashlib.md5(conteudo).hexdigest()
+
+
+
+def historia_mudou():
+    """
+    Verifica se o arquivo historia.txt foi modificado desde a última vez.
+    Retorna True se mudou, False se está igual.
+    """
+    hash_atual = calcular_hash_arquivo(ARQUIVO_TEXTO)
+
+    if hash_atual is None:
+        return False  # Arquivo não existe
+
+    # Verifica se existe hash salvo
+    if not os.path.exists(ARQUIVO_HASH):
+        return True  # Primeira vez, precisa gerar
+
+    # Lê o hash salvo
+    with open(ARQUIVO_HASH, 'r') as f:
+        hash_salvo = f.read().strip()
+
+    return hash_atual != hash_salvo
+
+
+
+def salvar_hash_atual():
+    """
+    Salva o hash do arquivo historia.txt atual.
+    Chamado depois de gerar o áudio com sucesso.
+    """
+    hash_atual = calcular_hash_arquivo(ARQUIVO_TEXTO)
+
+    if hash_atual:
+        with open(ARQUIVO_HASH, 'w') as f:
+            f.write(hash_atual)
+
+
+
+def gerar_proximo_nome_video():
+    """
+    Gera o próximo nome de vídeo sequencial (video_001.mp4, video_002.mp4, etc).
+    Cria a pasta videos_gerados se não existir.
+    """
+    # Cria pasta se não existir
+    if not os.path.exists(PASTA_VIDEOS):
+        os.makedirs(PASTA_VIDEOS)
+        print(f"   ✅ Pasta '{PASTA_VIDEOS}' criada!")
+
+    # Busca todos os vídeos existentes
+    videos_existentes = glob.glob(os.path.join(PASTA_VIDEOS, "video_*.mp4"))
+
+    if not videos_existentes:
+        # Primeiro vídeo
+        numero = 1
+    else:
+        # Pega o maior número existente
+        numeros = []
+        for video in videos_existentes:
+            nome = os.path.basename(video)
+            # Extrai número do nome (video_001.mp4 -> 001)
+            try:
+                num_str = nome.replace("video_", "").replace(".mp4", "")
+                numeros.append(int(num_str))
+            except:
+                pass
+
+        numero = max(numeros) + 1 if numeros else 1
+
+    # Formato: video_001.mp4, video_002.mp4, etc
+    nome_video = os.path.join(PASTA_VIDEOS, f"video_{numero:03d}.mp4")
+
+    return nome_video
 
 
 
@@ -477,28 +571,43 @@ async def criar_video_longo():
 
     print(f"\n📖 1. Verificando áudio...")
 
- 
 
-    # Se o áudio já existir e você não mudou o texto, ele usa o mesmo para economizar tempo
+
+    # NOVA LÓGICA: Detecta automaticamente se o texto mudou
 
     timestamps_cta = []  # Lista de timestamps onde aparecem CTAs
 
-    if os.path.exists(NOME_AUDIO):
+    texto_mudou = historia_mudou()
 
-        print("   -> Arquivo de áudio já existe. Usando ele.")
-        print("   ⚠️ Se quiser detectar CTAs novamente, delete o arquivo de áudio.")
+
+
+    if not os.path.exists(ARQUIVO_TEXTO):
+
+        print("❌ Crie o arquivo historia.txt com sua história longa!")
+
+        return
+
+
+
+    # Verifica se precisa regenerar o áudio
+
+    if os.path.exists(NOME_AUDIO) and not texto_mudou:
+
+        print("   -> Áudio já existe e o texto não mudou. Reutilizando áudio anterior.")
+
+        print("   💡 Dica: Edite historia.txt para gerar um novo vídeo automaticamente!")
 
     else:
 
-        if not os.path.exists(ARQUIVO_TEXTO):
+        if texto_mudou:
 
-            print("❌ Crie o arquivo historia.txt com sua história longa!")
+            print("   🆕 NOVA HISTÓRIA DETECTADA! Gerando novo áudio...")
 
-            return
+        else:
+
+            print("   -> Gerando narração longa (Isso pode demorar uns minutos)...")
 
 
-
-        print("   -> Gerando narração longa (Isso pode demorar uns minutos)...")
 
         with open(ARQUIVO_TEXTO, "r", encoding="utf-8") as f:
 
@@ -507,11 +616,24 @@ async def criar_video_longo():
 
 
         # Gera áudio COM timestamps de CTAs
+
         if ATIVAR_GIF_CTA:
+
             timestamps_cta = await gerar_audio_com_timestamps(texto, NOME_AUDIO)
+
         else:
+
             comunicacao = edge_tts.Communicate(texto, VOZ)
+
             await comunicacao.save(NOME_AUDIO)
+
+
+
+        # Salva o hash do texto processado
+
+        salvar_hash_atual()
+
+        print("   ✅ Hash da história salvo para detecção automática de mudanças!")
 
 
 
@@ -745,9 +867,15 @@ async def criar_video_longo():
 
     print("\n🚀 RENDERIZANDO (Isso vai demorar, vá tomar um café)...")
 
-    print(f"   -> Arquivo de saída: {NOME_VIDEO}")
 
- 
+
+    # GERA NOME AUTOMÁTICO PARA O VÍDEO (video_001.mp4, video_002.mp4, etc)
+
+    nome_video_saida = gerar_proximo_nome_video()
+
+    print(f"   -> Arquivo de saída: {nome_video_saida}")
+
+
 
     # OTIMIZAÇÃO DE RENDERIZAÇÃO PARA MÁXIMA VELOCIDADE
 
@@ -761,7 +889,7 @@ async def criar_video_longo():
 
     video_final.write_videofile(
 
-        NOME_VIDEO,
+        nome_video_saida,
 
         fps=24,
 
@@ -795,11 +923,13 @@ async def criar_video_longo():
 
 
 
-    print(f"\n✅✅ VÍDEO LONGO PRONTO: {NOME_VIDEO}")
+    print(f"\n✅✅ VÍDEO LONGO PRONTO: {nome_video_saida}")
 
     print(f"🎬 Duração: {tempo_total/60:.2f} minutos")
 
     print(f"🔊 Áudio: Incluído e sincronizado!")
+
+    print(f"📁 Salvo em: {PASTA_VIDEOS}/")
 
 
 
@@ -835,7 +965,7 @@ async def criar_video_longo():
 
         video_url = fazer_upload_youtube(
 
-            NOME_VIDEO,
+            nome_video_saida,
 
             metadados["titulo"],
 
