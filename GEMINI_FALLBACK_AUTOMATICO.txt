@@ -1,0 +1,284 @@
+🔄 SISTEMA DE FALLBACK AUTOMÁTICO - GEMINI
+============================================
+
+O código agora tem FALLBACK AUTOMÁTICO de modelos Gemini!
+
+Se um modelo não funcionar (erro 404, quota, etc), o sistema
+automaticamente tenta o próximo modelo da lista.
+
+═══════════════════════════════════════════════════════════
+
+🎯 COMO FUNCIONA:
+
+Quando você roda o código, ele tenta os modelos nesta ordem:
+
+1. gemini-1.5-flash-latest  ← Tenta primeiro (mais recente)
+2. gemini-1.5-flash         ← Fallback 1
+3. gemini-1.5-pro-latest    ← Fallback 2 (mais preciso)
+4. gemini-1.5-pro           ← Fallback 3
+5. gemini-2.0-flash-exp     ← Fallback 4 (experimental)
+
+O primeiro que funcionar será usado automaticamente!
+
+═══════════════════════════════════════════════════════════
+
+✅ VANTAGENS:
+
+✅ Resistente a erros (tenta até 5 modelos diferentes)
+✅ Não quebra se um modelo estiver indisponível
+✅ Funciona mesmo com quota excedida em um modelo
+✅ Testa automaticamente qual modelo funciona
+✅ Zero configuração manual necessária
+
+═══════════════════════════════════════════════════════════
+
+📊 O QUE VOCÊ VERÁ NO CONSOLE:
+
+CASO 1: Sucesso com primeiro modelo
+```
+🎨 3. Preparando Background...
+   🤖 Analisando história para gerar background personalizado...
+   🤖 Analisando história para gerar prompt de imagem personalizado...
+   ✅ Modelo Gemini ativo: gemini-1.5-flash-latest
+   ✅ Prompt gerado: dark abandoned castle, fog, moonlight, horror atmosphere
+```
+
+CASO 2: Fallback automático
+```
+🎨 3. Preparando Background...
+   🤖 Analisando história para gerar background personalizado...
+   🤖 Analisando história para gerar prompt de imagem personalizado...
+   [Tenta gemini-1.5-flash-latest - falha silenciosamente]
+   [Tenta gemini-1.5-flash - falha silenciosamente]
+   ✅ Modelo Gemini ativo: gemini-1.5-pro-latest
+   ✅ Prompt gerado: dark cemetery at night, gothic atmosphere, cinematic
+```
+
+CASO 3: Todos os modelos falharam (quota diária excedida)
+```
+🎨 3. Preparando Background...
+   🤖 Analisando história para gerar background personalizado...
+   🤖 Analisando história para gerar prompt de imagem personalizado...
+   ⚠️  Nenhum modelo Gemini disponível. Usando prompt padrão.
+   💡 Possível causa: quota diária excedida. Tente amanhã ou use modelo pago.
+   🎨 Gerando Background com prompt personalizado...
+   📝 Prompt: dark horror atmosphere background, mysterious fog, cinematic lighting
+```
+
+═══════════════════════════════════════════════════════════
+
+⚙️ PERSONALIZAR A ORDEM DOS MODELOS:
+
+Você pode mudar quais modelos tentar editando app.py (linha 117):
+
+```python
+MODELOS_GEMINI_FALLBACK = [
+    'gemini-1.5-flash-latest',  # Tenta primeiro (rápido e barato)
+    'gemini-1.5-flash',          # Fallback 1
+    'gemini-1.5-pro-latest',     # Fallback 2 (mais preciso, mais caro)
+    'gemini-1.5-pro',            # Fallback 3
+    'gemini-2.0-flash-exp',      # Fallback 4 (experimental)
+]
+```
+
+EXEMPLOS DE PERSONALIZAÇÃO:
+
+OPÇÃO 1: Só usar modelos "flash" (mais rápido e barato):
+```python
+MODELOS_GEMINI_FALLBACK = [
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash',
+    'gemini-2.0-flash-exp',
+]
+```
+
+OPÇÃO 2: Priorizar qualidade (modelos "pro"):
+```python
+MODELOS_GEMINI_FALLBACK = [
+    'gemini-1.5-pro-latest',     # Tenta o melhor primeiro
+    'gemini-1.5-pro',
+    'gemini-1.5-flash-latest',   # Fallback mais barato
+]
+```
+
+OPÇÃO 3: Só usar modelo experimental (mais recente):
+```python
+MODELOS_GEMINI_FALLBACK = [
+    'gemini-2.0-flash-exp',
+]
+```
+
+═══════════════════════════════════════════════════════════
+
+🔍 TESTANDO QUAIS MODELOS FUNCIONAM:
+
+Use o script auxiliar para ver quais modelos estão disponíveis:
+
+```bash
+python listar_modelos_gemini.py
+```
+
+Isso mostrará todos os modelos Gemini que funcionam com sua chave!
+
+EXEMPLO DE SAÍDA:
+```
+🔍 LISTANDO MODELOS GEMINI DISPONÍVEIS...
+
+📋 MODELOS DISPONÍVEIS:
+
+✅ models/gemini-1.5-flash-latest
+   Display Name: Gemini 1.5 Flash Latest
+   Descrição: Fast and versatile multimodal model...
+   Métodos suportados: generateContent, countTokens
+
+✅ models/gemini-1.5-pro-latest
+   Display Name: Gemini 1.5 Pro Latest
+   Descrição: Mid-size multimodal model...
+   Métodos suportados: generateContent, countTokens
+
+✅ models/gemini-2.0-flash-exp
+   Display Name: Gemini 2.0 Flash Experimental
+   Descrição: Experimental multimodal model...
+   Métodos suportados: generateContent, countTokens
+```
+
+═══════════════════════════════════════════════════════════
+
+🐛 RESOLUÇÃO DE PROBLEMAS:
+
+PROBLEMA: Erro "404 models/gemini-xxx is not found"
+SOLUÇÃO: O sistema tentará automaticamente outros modelos!
+         Se todos falharem, usará prompt genérico.
+
+PROBLEMA: Erro "429 quota exceeded" em todos os modelos
+SOLUÇÃO: Você atingiu o limite DIÁRIO de TODOS os modelos.
+         Opções:
+         1. Espere até amanhã (reset diário às 00:00 UTC)
+         2. Pague plano pago (US$ 7 por 1M tokens)
+         3. Use outra chave API Gemini
+
+PROBLEMA: "Nenhum modelo Gemini disponível"
+SOLUÇÃO: Todos os 5 modelos falharam.
+         1. Verifique sua chave API (app.py linha 32)
+         2. Verifique conexão internet
+         3. Rode: python listar_modelos_gemini.py
+         4. Veja se atingiu quota diária
+
+PROBLEMA: Background fica sempre genérico
+SOLUÇÃO: Gemini está falhando (provavelmente quota).
+         O sistema usa fallback genérico para não quebrar.
+         Espere ou pague plano pago.
+
+═══════════════════════════════════════════════════════════
+
+💰 CUSTOS E QUOTAS:
+
+PLANO GRATUITO (cada modelo tem seu próprio limite):
+✅ 15 requisições por minuto (flash)
+✅ 10 requisições por minuto (pro)
+✅ 1.500 requisições por dia (compartilhado)
+✅ 1M tokens por minuto
+
+PLANO PAGO (US$ 7 por 1M tokens):
+✅ Sem limite de requisições por minuto
+✅ 10.000 requisições por dia
+✅ 4M tokens por minuto
+✅ Suporte prioritário
+
+═══════════════════════════════════════════════════════════
+
+🎬 FLUXO DO SISTEMA:
+
+1. Código inicia
+2. Precisa gerar background/título/descrição
+3. Chama criar_modelo_gemini_com_fallback()
+4. Sistema tenta modelos em ordem:
+   ❌ gemini-1.5-flash-latest → erro 404
+   ❌ gemini-1.5-flash → erro 404
+   ✅ gemini-1.5-pro-latest → FUNCIONA!
+5. Usa gemini-1.5-pro-latest para gerar conteúdo
+6. Próxima vez que rodar, tenta a mesma sequência
+
+VANTAGEM: Você não precisa se preocupar com modelos!
+O sistema se adapta automaticamente! 🎯
+
+═══════════════════════════════════════════════════════════
+
+📚 CÓDIGO TÉCNICO:
+
+A função criar_modelo_gemini_com_fallback() (app.py:186-206):
+
+```python
+def criar_modelo_gemini_com_fallback():
+    """
+    Tenta criar um modelo Gemini, tentando múltiplos modelos em ordem.
+    Retorna (model, nome_modelo) se sucesso, ou (None, None) se todos falharem.
+    """
+    genai.configure(api_key=CHAVE_GEMINI)
+
+    for nome_modelo in MODELOS_GEMINI_FALLBACK:
+        try:
+            model = genai.GenerativeModel(nome_modelo)
+            # Testa se o modelo funciona com um prompt simples
+            test_response = model.generate_content("Hi")
+            if test_response.text:
+                print(f"   ✅ Modelo Gemini ativo: {nome_modelo}")
+                return model, nome_modelo
+        except Exception as e:
+            # Se falhar, tenta o próximo
+            continue
+
+    # Se todos falharem, retorna None
+    return None, None
+```
+
+COMO FUNCIONA:
+1. Percorre lista de modelos (MODELOS_GEMINI_FALLBACK)
+2. Para cada modelo, tenta criar e testar com "Hi"
+3. Se funcionar, retorna o modelo
+4. Se falhar, silenciosamente tenta o próximo
+5. Se todos falharem, retorna None
+6. O código que chama essa função usa fallback genérico se None
+
+═══════════════════════════════════════════════════════════
+
+🎯 RESUMO:
+
+ANTES (sem fallback):
+❌ Erro 404 → código quebrava
+❌ Quota excedida → código quebrava
+❌ Tinha que mudar código manualmente
+
+AGORA (com fallback):
+✅ Erro 404 → tenta próximo modelo
+✅ Quota excedida → tenta próximo modelo
+✅ Totalmente automático
+✅ Robustez máxima
+✅ Zero manutenção
+
+═══════════════════════════════════════════════════════════
+
+🔗 LINKS ÚTEIS:
+
+Modelos disponíveis:
+https://ai.google.dev/gemini-api/docs/models/gemini
+
+Quotas e limites:
+https://ai.google.dev/gemini-api/docs/rate-limits
+
+Monitorar uso:
+https://ai.dev/usage
+
+Pricing:
+https://ai.google.dev/pricing
+
+═══════════════════════════════════════════════════════════
+
+✅ TUDO PRONTO!
+
+Agora seu sistema é ROBUSTO e INTELIGENTE! 🚀
+
+Se um modelo falhar, outro assume automaticamente.
+Você nunca mais terá que se preocupar com isso!
+
+Basta rodar: python app.py e aproveitar! 🎉

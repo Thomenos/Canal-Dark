@@ -112,6 +112,18 @@ FORCAR_NOVO_BACKGROUND = True  # True = sempre deleta e gera novo background | F
 
 
 
+# Modelos Gemini (fallback automático se um não funcionar)
+
+MODELOS_GEMINI_FALLBACK = [
+    'gemini-1.5-flash-latest',  # Tenta primeiro (nome atualizado)
+    'gemini-1.5-flash',          # Fallback 1
+    'gemini-1.5-pro-latest',     # Fallback 2 (mais preciso)
+    'gemini-1.5-pro',            # Fallback 3
+    'gemini-2.0-flash-exp',      # Fallback 4 (experimental)
+]
+
+
+
 # --- TEMPLATES GEMINI (PERSONALIZÁVEIS) ---
 
 # Template para geração de títulos
@@ -170,6 +182,29 @@ Exemplo de formato: "dark abandoned mansion interior, atmospheric fog, dim candl
 
 
 # --- FUNÇÕES ---
+
+def criar_modelo_gemini_com_fallback():
+    """
+    Tenta criar um modelo Gemini, tentando múltiplos modelos em ordem.
+    Retorna (model, nome_modelo) se sucesso, ou (None, None) se todos falharem.
+    """
+    genai.configure(api_key=CHAVE_GEMINI)
+
+    for nome_modelo in MODELOS_GEMINI_FALLBACK:
+        try:
+            model = genai.GenerativeModel(nome_modelo)
+            # Testa se o modelo funciona com um prompt simples
+            test_response = model.generate_content("Hi")
+            if test_response.text:
+                print(f"   ✅ Modelo Gemini ativo: {nome_modelo}")
+                return model, nome_modelo
+        except Exception as e:
+            # Se falhar, tenta o próximo
+            continue
+
+    # Se todos falharem, retorna None
+    return None, None
+
 
 def baixar_background_ia(prompt_personalizado=None):
     """
@@ -523,13 +558,19 @@ def gerar_prompt_imagem_fundo(texto_historia):
             print("⚠️  Chave Gemini não configurada. Usando prompt padrão.")
             return "dark horror atmosphere background, mysterious fog, cinematic lighting"
 
-        genai.configure(api_key=CHAVE_GEMINI)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        print("   🤖 Analisando história para gerar prompt de imagem personalizado...")
+
+        # Tenta criar modelo com fallback automático
+        model, nome_modelo = criar_modelo_gemini_com_fallback()
+
+        if model is None:
+            print("   ⚠️  Nenhum modelo Gemini disponível. Usando prompt padrão.")
+            print("   💡 Possível causa: quota diária excedida. Tente amanhã ou use modelo pago.")
+            return "dark horror atmosphere background, mysterious fog, cinematic lighting"
 
         # Usa a história completa para análise mais precisa
         prompt = TEMPLATE_PROMPT_IMAGEM.format(historia_completa=texto_historia)
 
-        print("   🤖 Analisando história para gerar prompt de imagem personalizado...")
         response = model.generate_content(prompt)
         prompt_gerado = response.text.strip()
 
@@ -541,6 +582,7 @@ def gerar_prompt_imagem_fundo(texto_historia):
 
     except Exception as e:
         print(f"   ❌ Erro ao gerar prompt de imagem: {e}")
+        print("   💡 Usando prompt genérico como fallback.")
         return "dark horror atmosphere background, mysterious fog, cinematic lighting"
 
 
@@ -556,13 +598,22 @@ def gerar_titulo_descricao_gemini(texto_historia):
                 "descricao": "Uma narrativa sombria e atmosférica de terror.\n\n#terror #dark #história"
             }
 
-        genai.configure(api_key=CHAVE_GEMINI)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        print("   🤖 Gerando título com template personalizado...")
+
+        # Tenta criar modelo com fallback automático
+        model, nome_modelo = criar_modelo_gemini_com_fallback()
+
+        if model is None:
+            print("   ⚠️  Nenhum modelo Gemini disponível. Usando título/descrição padrão.")
+            print("   💡 Possível causa: quota diária excedida. Tente amanhã ou use modelo pago.")
+            return {
+                "titulo": "História de Terror - Canal Dark",
+                "descricao": "Uma narrativa sombria e atmosférica de terror.\n\n#terror #dark #história"
+            }
 
         # Pega os primeiros 800 caracteres da história para contexto mais rico
         resumo_historia = texto_historia[:800]
 
-        print("   🤖 Gerando título com template personalizado...")
         # Gera TÍTULO usando template personalizado
         prompt_titulo = TEMPLATE_TITULO.format(resumo_historia=resumo_historia)
         response_titulo = model.generate_content(prompt_titulo)
@@ -595,6 +646,7 @@ def gerar_titulo_descricao_gemini(texto_historia):
 
     except Exception as e:
         print(f"❌ Erro ao gerar metadados com Gemini: {e}")
+        print("   💡 Usando título/descrição padrão como fallback.")
         return {
             "titulo": "História de Terror - Canal Dark",
             "descricao": "Uma narrativa sombria e atmosférica de terror.\n\n#terror #dark #história"
