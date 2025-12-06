@@ -1,0 +1,290 @@
+🤖 TEMPLATES PERSONALIZADOS GEMINI AI
+======================================
+
+O código agora usa templates TOTALMENTE PERSONALIZÁVEIS para gerar:
+✅ Títulos otimizados para YouTube
+✅ Descrições envolventes e profissionais
+✅ Prompts de imagem de fundo baseados na história
+
+═══════════════════════════════════════════════════════════
+
+🎯 COMO FUNCIONA:
+
+ANTES:
+- Títulos e descrições eram gerados com um prompt fixo
+- Background era manual (tinha que digitar o tema)
+
+AGORA:
+- Templates 100% personalizáveis no app.py (linhas 109-162)
+- Background gerado AUTOMATICAMENTE analisando a história
+- Você pode mudar os prompts para seu estilo!
+
+═══════════════════════════════════════════════════════════
+
+📝 TEMPLATES DISPONÍVEIS:
+
+1. TEMPLATE_TITULO (linha 112-125)
+   - Gera títulos chamativo para YouTube
+   - Máximo 80 caracteres
+   - Otimizado para SEO
+
+2. TEMPLATE_DESCRICAO (linha 128-144)
+   - Gera descrições de 200-300 palavras
+   - Inclui CTAs e hashtags
+   - Profissional e envolvente
+
+3. TEMPLATE_PROMPT_IMAGEM (linha 147-162)
+   - Analisa a história completa
+   - Gera prompt em inglês para IA de imagens
+   - Captura o ambiente e atmosfera da história
+
+═══════════════════════════════════════════════════════════
+
+⚙️ COMO PERSONALIZAR OS TEMPLATES:
+
+1. Abra o arquivo: app.py
+
+2. Vá até a seção: # --- TEMPLATES GEMINI (PERSONALIZÁVEIS) ---
+   (linhas 109-162)
+
+3. Edite o template que quiser!
+
+Exemplo - Mudar estilo do título:
+
+ANTES (padrão):
+```python
+TEMPLATE_TITULO = """Você é um especialista em marketing para YouTube no nicho de terror/dark.
+
+Com base nesta história de terror:
+{resumo_historia}
+
+Gere um TÍTULO chamativo e otimizado para SEO com estas características:
+- Máximo 80 caracteres
+- Use palavras impactantes (misterioso, assustador, inexplicável, etc)
+...
+"""
+```
+
+DEPOIS (seu estilo):
+```python
+TEMPLATE_TITULO = """Você é um criador de conteúdo de terror brasileiro.
+
+História:
+{resumo_historia}
+
+Crie um título VIRAL com:
+- Gírias brasileiras de terror
+- Máximo 60 caracteres
+- Use CAPS para ênfase
+- Estilo "ACONTECEU DE VERDADE"
+...
+"""
+```
+
+═══════════════════════════════════════════════════════════
+
+🎨 BACKGROUND AUTOMÁTICO - COMO FUNCIONA:
+
+1. Você escreve sua história em historia.txt
+
+2. Roda o código: python app.py
+
+3. Se não existir background, o código:
+   📖 Lê a história completa
+   🤖 Analisa com Gemini AI
+   💡 Identifica: floresta? casa? cemitério? etc
+   🎨 Gera prompt otimizado em inglês
+   🖼️ Cria imagem personalizada automaticamente
+
+EXEMPLO REAL:
+
+História sobre "vampiro em castelo gótico":
+-> Gemini analisa
+-> Gera: "dark gothic castle interior, candlelit halls, mysterious atmosphere, horror cinematic"
+-> Background perfeito gerado! 🎉
+
+História sobre "floresta assombrada":
+-> Gemini analisa
+-> Gera: "dark haunted forest, fog between trees, moonlight, eerie atmosphere, horror background"
+-> Background perfeito gerado! 🎉
+
+═══════════════════════════════════════════════════════════
+
+🔧 CONFIGURAÇÕES IMPORTANTES:
+
+app.py linha 95:
+```python
+ATIVAR_EFEITO_PULSO = True  # Efeito de respiração (INDISPENSÁVEL!)
+```
+
+⚠️ IMPORTANTE: O efeito de pulso está ATIVADO porque é essencial
+para a qualidade atmosférica dos vídeos!
+
+═══════════════════════════════════════════════════════════
+
+💡 DICAS DE PERSONALIZAÇÃO:
+
+1️⃣ PARA TÍTULOS MAIS CURTOS:
+   Mude "Máximo 80 caracteres" para "Máximo 60 caracteres"
+
+2️⃣ PARA DESCRIÇÕES MAIS LONGAS:
+   Mude "200-300 palavras" para "300-500 palavras"
+
+3️⃣ PARA BACKGROUNDS MAIS ESPECÍFICOS:
+   Adicione instruções como:
+   "- Sempre inclua velas e névoa"
+   "- Prefira tons de azul e roxo"
+
+4️⃣ PARA ESTILO DIFERENTE:
+   Mude o tom do prompt:
+   "Você é um especialista..." → "Você é um criador viral..."
+
+═══════════════════════════════════════════════════════════
+
+📊 VANTAGENS DOS TEMPLATES PERSONALIZADOS:
+
+✅ Títulos e descrições mais consistentes com seu canal
+✅ Backgrounds automáticos (nunca mais digitar manualmente!)
+✅ Personalização total do estilo de escrita
+✅ Melhor SEO e engajamento
+✅ Economia de tempo (tudo automático)
+✅ Qualidade profissional
+
+═══════════════════════════════════════════════════════════
+
+🎬 FLUXO COMPLETO AGORA:
+
+1. Você escreve história em historia.txt
+2. Roda: python app.py
+3. Sistema automaticamente:
+   ✅ Analisa história com Gemini
+   ✅ Gera prompt de imagem personalizado
+   ✅ Cria background perfeito para a história
+   ✅ Gera narração com voz PT-BR
+   ✅ Aplica efeito de pulso atmosférico
+   ✅ Detecta CTAs e adiciona GIF
+   ✅ Gera título otimizado para YouTube
+   ✅ Gera descrição profissional
+   ✅ Faz upload automático (se ativado)
+
+TUDO 100% AUTOMÁTICO! 🚀
+
+═══════════════════════════════════════════════════════════
+
+🔍 VERIFICANDO OS RESULTADOS:
+
+Durante a execução você verá:
+
+```
+🎨 3. Preparando Background para os 45.23 minutos restantes...
+   🤖 Analisando história para gerar background personalizado...
+   🤖 Analisando história para gerar prompt de imagem personalizado...
+   ✅ Prompt gerado: dark abandoned mansion interior, eerie shadows, gothic horror, cinematic
+   🎨 Gerando Background com prompt personalizado...
+   📝 Prompt: dark abandoned mansion interior, eerie shadows, gothic horror, cinematic, 4k, no text
+   ✅ Background gerado com sucesso!
+```
+
+Para títulos e descrições:
+
+```
+📺 5. Gerando metadados do vídeo (Título e Descrição)...
+   🤖 Gerando título com template personalizado...
+   ✅ Título gerado: O Mistério da Mansão Abandonada
+   🤖 Gerando descrição com template personalizado...
+   ✅ Descrição gerada (287 caracteres)
+```
+
+═══════════════════════════════════════════════════════════
+
+⚠️ REQUISITOS:
+
+Para usar os templates personalizados você precisa:
+
+1. ✅ Chave Gemini configurada no app.py (linha 32)
+2. ✅ Internet ativa (para chamadas da API)
+3. ✅ Arquivo historia.txt com sua história
+
+Se a chave não estiver configurada:
+- Títulos/descrições: usa padrão genérico
+- Background: usa prompt genérico
+
+═══════════════════════════════════════════════════════════
+
+🎯 EXEMPLOS DE CUSTOMIZAÇÃO:
+
+EXEMPLO 1 - Canal de Terror Brasileiro:
+```python
+TEMPLATE_TITULO = """Crie um título em português BR estilo:
+"ASSUSTADOR: [tema principal]"
+ou "REAL: O que aconteceu em [local]"
+
+História: {resumo_historia}
+
+Máximo 70 caracteres, use CAPS para impacto.
+"""
+```
+
+EXEMPLO 2 - Canal de Creepypasta:
+```python
+TEMPLATE_DESCRICAO = """Esta é uma creepypasta de terror.
+
+História: {resumo_historia}
+
+Escreva descrição estilo:
+"⚠️ AVISO: Esta história contém elementos perturbadores..."
+Inclua: #creepypasta #terror #horror #medo
+"""
+```
+
+EXEMPLO 3 - Backgrounds Específicos:
+```python
+TEMPLATE_PROMPT_IMAGEM = """Analise: {historia_completa}
+
+Gere prompt para imagem dark com:
+- SEMPRE use tons de roxo e azul
+- Inclua lua cheia se possível
+- Estilo cyberpunk dark horror
+- Máximo 12 palavras em inglês
+"""
+```
+
+═══════════════════════════════════════════════════════════
+
+🆘 RESOLUÇÃO DE PROBLEMAS:
+
+PROBLEMA: "Títulos muito genéricos"
+SOLUÇÃO: Edite TEMPLATE_TITULO, seja mais específico
+
+PROBLEMA: "Background não combina com história"
+SOLUÇÃO: Edite TEMPLATE_PROMPT_IMAGEM, adicione mais instruções
+
+PROBLEMA: "Descrição muito longa"
+SOLUÇÃO: Mude "200-300 palavras" para "150-200 palavras"
+
+PROBLEMA: "Gemini não funciona"
+SOLUÇÃO: Verifique chave na linha 32 do app.py
+
+═══════════════════════════════════════════════════════════
+
+📚 RECURSOS ADICIONAIS:
+
+Onde encontrar os templates: app.py linhas 109-162
+Função de título/descrição: app.py linhas 535-589
+Função de prompt de imagem: app.py linhas 504-532
+Integração no workflow: app.py linhas 856-866
+
+═══════════════════════════════════════════════════════════
+
+🎉 RESULTADO FINAL:
+
+Com os templates personalizados você tem:
+
+✅ Automação 100% completa
+✅ Backgrounds perfeitos para cada história
+✅ Títulos otimizados para seu canal
+✅ Descrições profissionais e envolventes
+✅ Zero trabalho manual
+✅ Qualidade de canal profissional
+
+Apenas escreva sua história e deixe a IA fazer o resto! 🚀

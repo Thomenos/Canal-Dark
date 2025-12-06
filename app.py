@@ -92,7 +92,7 @@ ATIVAR_GIF_CTA = True  # True para ativar overlay de GIF quando o texto pedir pa
 
 # Efeito de Pulso/Respiração
 
-ATIVAR_EFEITO_PULSO = False  # False = MUITO mais rápido! True = mais atmosférico
+ATIVAR_EFEITO_PULSO = True  # True = atmosférico e profissional (indispensável!)
 
 
 
@@ -104,50 +104,113 @@ ARQUIVO_CREDENCIAIS_YOUTUBE = "client_secret.json"  # Arquivo de credenciais OAu
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
- 
+
+
+# --- TEMPLATES GEMINI (PERSONALIZÁVEIS) ---
+
+# Template para geração de títulos
+TEMPLATE_TITULO = """Você é um especialista em marketing para YouTube no nicho de terror/dark.
+
+Com base nesta história de terror:
+{resumo_historia}
+
+Gere um TÍTULO chamativo e otimizado para SEO com estas características:
+- Máximo 80 caracteres
+- Use palavras impactantes (misterioso, assustador, inexplicável, etc)
+- Desperte curiosidade sem spoilers
+- Inclua elementos da história que chamem atenção
+- Formato sugerido: "O [ELEMENTO MISTERIOSO] que [AÇÃO INTRIGANTE]" ou similar
+
+Responda APENAS com o título, sem marcadores ou explicações.
+"""
+
+# Template para geração de descrições
+TEMPLATE_DESCRICAO = """Você é um especialista em marketing para YouTube no nicho de terror/dark.
+
+Com base nesta história de terror:
+{resumo_historia}
+
+Gere uma DESCRIÇÃO completa e envolvente (200-300 palavras) que:
+- Desperte curiosidade extrema sem revelar spoilers
+- Use palavras-chave de terror/mistério naturalmente no texto
+- Crie senso de urgência e mistério
+- Mencione que é narrado por IA de alta qualidade
+- Inclua Call-to-Action (inscreva-se, ative o sino, comente sua opinião)
+- Termine com hashtags relevantes: #terror #dark #horror #creepypasta #historiasdetterror #medo
+
+Escreva de forma envolvente e profissional, como se fosse um roteirista de terror experiente.
+
+Responda APENAS com a descrição, sem marcadores ou títulos.
+"""
+
+# Template para geração de prompt de imagem de fundo
+TEMPLATE_PROMPT_IMAGEM = """Você é um especialista em geração de prompts para IA de imagens.
+
+Analise esta história de terror:
+{historia_completa}
+
+Com base na história, crie um prompt em INGLÊS para gerar uma imagem de fundo atmosférica que:
+- Capture o AMBIENTE principal da história (floresta, casa, cemitério, etc)
+- Seja dark, atmosférica e misteriosa
+- NÃO inclua pessoas, rostos ou ações específicas
+- Seja adequada como background loop (sem elementos muito específicos)
+- Use termos como: "dark atmosphere", "cinematic lighting", "mysterious", "horror background"
+- Mantenha o prompt conciso (máximo 15 palavras)
+
+Responda APENAS com o prompt em inglês, sem explicações ou marcadores.
+Exemplo de formato: "dark abandoned mansion interior, atmospheric fog, dim candlelight, gothic horror, cinematic"
+"""
+
+
 
 # --- FUNÇÕES ---
 
-def baixar_background_ia(tema):
-
-    print(f"   🎨 Gerando Background Atmosférico para o tema '{tema}'...")
+def baixar_background_ia(prompt_personalizado=None):
+    """
+    Gera background atmosférico usando IA.
+    Se prompt_personalizado for None, usa um prompt genérico.
+    """
+    if prompt_personalizado:
+        print(f"   🎨 Gerando Background com prompt personalizado...")
+        print(f"   📝 Prompt: {prompt_personalizado}")
+    else:
+        print(f"   🎨 Gerando Background Atmosférico genérico...")
 
     if not os.path.exists(PASTA_BACKGROUND):
-
         os.makedirs(PASTA_BACKGROUND)
-
- 
 
     caminho = os.path.join(PASTA_BACKGROUND, "bg_principal.jpg")
 
- 
+    # Usa prompt personalizado ou genérico
+    if prompt_personalizado:
+        # Já vem completo da análise da história
+        prompt = prompt_personalizado
+    else:
+        # Fallback genérico
+        prompt = "dark horror atmosphere background, mysterious fog, cinematic lighting, 4k, no text"
 
-    # Prompt focado em "Ambiente" e não em "Ação"
-
-    prompt = f"dark horror atmosphere background, {tema}, seamless texture, 4k, cinematic lighting, mysterious, no text, subtle"
+    # Adiciona parâmetros de qualidade se não estiverem no prompt
+    if "4k" not in prompt.lower():
+        prompt += ", 4k"
+    if "no text" not in prompt.lower():
+        prompt += ", no text"
 
     url_prompt = prompt.replace(" ", "%20")
 
- 
-
     try:
-
         # Pede imagem Widescreen para vídeo longo de YouTube
-
         url = f"https://image.pollinations.ai/prompt/{url_prompt}?width={RESOLUCAO_LARGURA}&height={RESOLUCAO_ALTURA}&nologo=true"
 
         resposta = requests.get(url, timeout=60)
 
         if resposta.status_code == 200:
-
             with open(caminho, 'wb') as f:
-
                 f.write(resposta.content)
 
+            print(f"   ✅ Background gerado com sucesso!")
             return caminho
 
     except Exception as e:
-
         print(f"❌ Erro ao baixar background: {e}")
 
     return None
@@ -444,9 +507,40 @@ def adicionar_gif_overlay(video_clip, gif_path, timestamps, duracao_gif=3.0, pos
 
 
 
+def gerar_prompt_imagem_fundo(texto_historia):
+    """
+    Analisa a história e gera um prompt para criar imagem de fundo personalizada.
+    Retorna o prompt em inglês otimizado para geração de imagem.
+    """
+    try:
+        if CHAVE_GEMINI == "COLE_SUA_CHAVE_AQUI":
+            print("⚠️  Chave Gemini não configurada. Usando prompt padrão.")
+            return "dark horror atmosphere background, mysterious fog, cinematic lighting"
+
+        genai.configure(api_key=CHAVE_GEMINI)
+        model = genai.GenerativeModel('gemini-2.0-flash')
+
+        # Usa a história completa para análise mais precisa
+        prompt = TEMPLATE_PROMPT_IMAGEM.format(historia_completa=texto_historia)
+
+        print("   🤖 Analisando história para gerar prompt de imagem personalizado...")
+        response = model.generate_content(prompt)
+        prompt_gerado = response.text.strip()
+
+        # Remove aspas e quebras de linha desnecessárias
+        prompt_gerado = prompt_gerado.replace('"', '').replace('\n', ' ').strip()
+
+        print(f"   ✅ Prompt gerado: {prompt_gerado}")
+        return prompt_gerado
+
+    except Exception as e:
+        print(f"   ❌ Erro ao gerar prompt de imagem: {e}")
+        return "dark horror atmosphere background, mysterious fog, cinematic lighting"
+
+
 def gerar_titulo_descricao_gemini(texto_historia):
     """
-    Gera título e descrição para o vídeo usando Gemini AI.
+    Gera título e descrição para o vídeo usando Gemini AI com templates personalizados.
     """
     try:
         if CHAVE_GEMINI == "COLE_SUA_CHAVE_AQUI":
@@ -459,64 +553,34 @@ def gerar_titulo_descricao_gemini(texto_historia):
         genai.configure(api_key=CHAVE_GEMINI)
         model = genai.GenerativeModel('gemini-2.0-flash')
 
-        # Pega os primeiros 500 caracteres da história
-        resumo_historia = texto_historia[:500]
+        # Pega os primeiros 800 caracteres da história para contexto mais rico
+        resumo_historia = texto_historia[:800]
 
-        prompt = f"""Você é um especialista em marketing para YouTube no nicho de terror/dark.
+        print("   🤖 Gerando título com template personalizado...")
+        # Gera TÍTULO usando template personalizado
+        prompt_titulo = TEMPLATE_TITULO.format(resumo_historia=resumo_historia)
+        response_titulo = model.generate_content(prompt_titulo)
+        titulo = response_titulo.text.strip()
 
-Com base nesta história de terror:
-{resumo_historia}...
-
-Gere:
-1. Um TÍTULO chamativo e otimizado para SEO (máximo 80 caracteres)
-2. Uma DESCRIÇÃO completa e envolvente (200-300 palavras) que:
-   - Desperte curiosidade sem spoilers
-   - Use palavras-chave de terror/mistério
-   - Inclua hashtags relevantes (#terror #dark #horror #creepypasta)
-   - Mencione que é narrado por IA
-
-Formato da resposta:
-TÍTULO: [seu título aqui]
-DESCRIÇÃO: [sua descrição aqui]
-"""
-
-        response = model.generate_content(prompt)
-        resultado = response.text
-
-        # DEBUG: Mostra a resposta bruta do Gemini
-        print(f"\n🔍 DEBUG - Resposta do Gemini:")
-        print(resultado[:200] + "...\n")
-
-        # Extrai título e descrição
-        linhas = resultado.split('\n')
-        titulo = ""
-        descricao = ""
-
-        capturando_descricao = False
-        for linha in linhas:
-            linha_upper = linha.upper()
-            if "TÍTULO" in linha_upper or "TITULO" in linha_upper:
-                titulo = linha.split(":", 1)[-1].strip()
-            elif "DESCRIÇÃO" in linha_upper or "DESCRICAO" in linha_upper:
-                descricao = linha.split(":", 1)[-1].strip()
-                capturando_descricao = True
-            elif capturando_descricao and linha.strip():
-                descricao += "\n" + linha
-
-        # Se não encontrou com marcadores, tenta pegar do texto direto
-        if not titulo:
-            # Pega a primeira linha não vazia como título
-            for linha in linhas:
-                if linha.strip() and len(linha.strip()) > 10:
-                    titulo = linha.strip()
-                    break
+        # Remove aspas e marcadores desnecessários
+        titulo = titulo.replace('"', '').replace('TÍTULO:', '').replace('Título:', '').strip()
 
         # Limita o título a 100 caracteres (limite do YouTube)
         if len(titulo) > 100:
             titulo = titulo[:97] + "..."
 
-        print(f"✅ Título gerado: {titulo if titulo else '(vazio - usando padrão)'}")
-        print(f"✅ Descrição gerada: {descricao[:100] if descricao else '(vazia - usando padrão)'}...")
+        print(f"   ✅ Título gerado: {titulo}")
+
+        print("   🤖 Gerando descrição com template personalizado...")
+        # Gera DESCRIÇÃO usando template personalizado
+        prompt_descricao = TEMPLATE_DESCRICAO.format(resumo_historia=resumo_historia)
+        response_descricao = model.generate_content(prompt_descricao)
+        descricao = response_descricao.text.strip()
+
+        # Remove marcadores desnecessários
+        descricao = descricao.replace('DESCRIÇÃO:', '').replace('Descrição:', '').strip()
+
+        print(f"   ✅ Descrição gerada ({len(descricao)} caracteres)")
 
         return {
             "titulo": titulo if titulo else "História de Terror - Canal Dark",
@@ -790,10 +854,16 @@ async def criar_video_longo():
  
 
         if not os.path.exists(caminho_bg):
+            # Lê a história para gerar prompt personalizado
+            print("   🤖 Analisando história para gerar background personalizado...")
+            with open(ARQUIVO_TEXTO, "r", encoding="utf-8") as f:
+                texto_historia = f.read()
 
-            tema = input("👻 Não achei imagem de fundo. Sobre o que é a história? (ex: floresta, casa): ")
+            # Gera prompt personalizado usando IA
+            prompt_bg = gerar_prompt_imagem_fundo(texto_historia)
 
-            caminho_bg = baixar_background_ia(tema)
+            # Gera background com prompt personalizado
+            caminho_bg = baixar_background_ia(prompt_bg)
 
  
 
