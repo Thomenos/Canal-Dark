@@ -106,6 +106,12 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
 
 
+# Background Automático
+
+FORCAR_NOVO_BACKGROUND = True  # True = sempre deleta e gera novo background | False = só gera se não existir
+
+
+
 # --- TEMPLATES GEMINI (PERSONALIZÁVEIS) ---
 
 # Template para geração de títulos
@@ -704,6 +710,17 @@ async def criar_video_longo():
     timestamps_cta = []  # Lista de timestamps onde aparecem CTAs
 
     texto_mudou = historia_mudou()
+
+    # 🗑️ DELETA BACKGROUND ANTIGO (se configurado para forçar novo background)
+    if FORCAR_NOVO_BACKGROUND:
+        caminho_bg_antigo = os.path.join(PASTA_BACKGROUND, "bg_principal.jpg")
+        if os.path.exists(caminho_bg_antigo):
+            try:
+                os.remove(caminho_bg_antigo)
+                print("   🗑️ Modo FORCAR_NOVO_BACKGROUND ativo: Background antigo deletado!")
+                print("   💡 Novo background será gerado baseado na história atual.")
+            except Exception as e:
+                print(f"   ⚠️ Não foi possível deletar background antigo: {e}")
 
 
 
