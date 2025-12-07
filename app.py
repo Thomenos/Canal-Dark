@@ -30,16 +30,6 @@ from googleapiclient.http import MediaFileUpload
 from google.auth.transport.requests import Request
 import pickle
 
-# Detecção de idioma
-try:
-    from langdetect import detect, DetectorFactory
-    DetectorFactory.seed = 0  # Para resultados consistentes
-    LANGDETECT_DISPONIVEL = True
-except ImportError:
-    LANGDETECT_DISPONIVEL = False
-    print("⚠️  Biblioteca 'langdetect' não instalada. Instale com: pip install langdetect")
-    print("   Usando PT-BR como idioma padrão.")
-
 
 # ============================================================================
 # CONFIGURAÇÕES
@@ -53,93 +43,8 @@ PASTA_VIDEOS_INTRO = "intro_hailuo"  # Vídeos de intro (opcional)
 PASTA_BACKGROUND = "background_loop"  # Imagem de fundo
 NOME_AUDIO = "narracao_atual.mp3"
 
-# Detecção Automática de Idioma
-DETECTAR_IDIOMA_AUTOMATICO = True  # True = detecta e usa voz nativa | False = usa VOZ_PADRAO
-
-# Voz padrão (usada se detecção falhar ou estiver desativada)
-VOZ_PADRAO = "pt-BR-AntonioNeural"  # Voz masculina PT-BR profissional
-
-# Mapeamento de idiomas para vozes Edge-TTS nativas
-VOZES_POR_IDIOMA = {
-    # Português
-    'pt': "pt-BR-AntonioNeural",      # Português Brasil - Masculino
-
-    # Inglês
-    'en': "en-US-GuyNeural",          # Inglês EUA - Masculino profundo
-
-    # Espanhol
-    'es': "es-ES-AlvaroNeural",       # Espanhol Espanha - Masculino
-
-    # Francês
-    'fr': "fr-FR-HenriNeural",        # Francês França - Masculino
-
-    # Alemão
-    'de': "de-DE-ConradNeural",       # Alemão - Masculino
-
-    # Italiano
-    'it': "it-IT-DiegoNeural",        # Italiano - Masculino
-
-    # Russo
-    'ru': "ru-RU-DmitryNeural",       # Russo - Masculino
-
-    # Japonês
-    'ja': "ja-JP-KeitaNeural",        # Japonês - Masculino
-
-    # Chinês
-    'zh-cn': "zh-CN-YunxiNeural",     # Chinês Mandarim - Masculino
-    'zh-tw': "zh-TW-YunJheNeural",    # Chinês Taiwan - Masculino
-
-    # Coreano
-    'ko': "ko-KR-InJoonNeural",       # Coreano - Masculino
-
-    # Árabe
-    'ar': "ar-SA-HamedNeural",        # Árabe - Masculino
-
-    # Hindi
-    'hi': "hi-IN-MadhurNeural",       # Hindi - Masculino
-
-    # Holandês
-    'nl': "nl-NL-MaartenNeural",      # Holandês - Masculino
-
-    # Polonês
-    'pl': "pl-PL-MarekNeural",        # Polonês - Masculino
-
-    # Turco
-    'tr': "tr-TR-AhmetNeural",        # Turco - Masculino
-
-    # Sueco
-    'sv': "sv-SE-MattiasNeural",      # Sueco - Masculino
-
-    # Norueguês
-    'no': "nb-NO-FinnNeural",         # Norueguês - Masculino
-
-    # Dinamarquês
-    'da': "da-DK-JeppeNeural",        # Dinamarquês - Masculino
-
-    # Finlandês
-    'fi': "fi-FI-HarriNeural",        # Finlandês - Masculino
-
-    # Grego
-    'el': "el-GR-NestorasNeural",     # Grego - Masculino
-
-    # Tcheco
-    'cs': "cs-CZ-AntoninNeural",      # Tcheco - Masculino
-
-    # Húngaro
-    'hu': "hu-HU-TamasNeural",        # Húngaro - Masculino
-
-    # Romeno
-    'ro': "ro-RO-EmilNeural",         # Romeno - Masculino
-
-    # Tailandês
-    'th': "th-TH-NiwatNeural",        # Tailandês - Masculino
-
-    # Vietnamita
-    'vi': "vi-VN-NamMinhNeural",      # Vietnamita - Masculino
-
-    # Indonésio
-    'id': "id-ID-ArdiNeural",         # Indonésio - Masculino
-}
+# Voz Edge-TTS (Português BR - Feminina)
+VOZ = "pt-BR-ManuelaNeural"  # Voz Manuela - Feminina suave e natural
 
 # GIF de Call-to-Action
 GIF_INSCRICAO = "inscricao.gif"
@@ -257,80 +162,21 @@ def parse_historia_txt(caminho_arquivo):
 
 
 # ============================================================================
-# FUNÇÕES DE DETECÇÃO DE IDIOMA
-# ============================================================================
-
-def detectar_idioma_texto(texto):
-    """
-    Detecta o idioma do texto e retorna a voz nativa correspondente.
-    IMPORTANTE: Ignora marcadores (=== ... ===) para evitar detecção errada.
-
-    Args:
-        texto: Texto da história para detectar idioma (preferencialmente descrição + história)
-
-    Returns:
-        str: Nome da voz Edge-TTS apropriada
-    """
-    # Se detecção desativada ou biblioteca não disponível, usa padrão
-    if not DETECTAR_IDIOMA_AUTOMATICO or not LANGDETECT_DISPONIVEL:
-        print(f"   🎙️  Usando voz padrão: {VOZ_PADRAO}")
-        return VOZ_PADRAO
-
-    try:
-        # Limpa marcadores residuais (=== ALGO ===) que podem estar em PT-BR
-        import re
-        texto_limpo = re.sub(r'===\s*[^=]+\s*===', '', texto)
-
-        # Remove múltiplos espaços/quebras de linha
-        texto_limpo = ' '.join(texto_limpo.split())
-
-        # Verifica se sobrou texto suficiente
-        if len(texto_limpo) < 20:
-            print(f"   ⚠️  Texto muito curto para detecção confiável")
-            print(f"   🎙️  Usando voz padrão: {VOZ_PADRAO}")
-            return VOZ_PADRAO
-
-        # Detecta idioma do texto limpo
-        idioma_detectado = detect(texto_limpo)
-
-        # Busca voz correspondente ao idioma
-        voz = VOZES_POR_IDIOMA.get(idioma_detectado, VOZ_PADRAO)
-
-        # Mostra resultado da detecção
-        print(f"   🌍 Idioma detectado: {idioma_detectado}")
-        print(f"   🎙️  Voz selecionada: {voz}")
-
-        return voz
-
-    except Exception as e:
-        print(f"   ⚠️  Erro na detecção de idioma: {e}")
-        print(f"   🎙️  Usando voz padrão: {VOZ_PADRAO}")
-        return VOZ_PADRAO
-
-
-# ============================================================================
 # FUNÇÕES DE ÁUDIO
 # ============================================================================
 
-async def gerar_audio_com_timestamps(texto, arquivo_saida, texto_completo_para_deteccao=None):
+async def gerar_audio_com_timestamps(texto, arquivo_saida):
     """
     Gera áudio da narração e detecta timestamps de CTAs (inscreva-se).
-    Detecta automaticamente o idioma do texto e usa a voz nativa.
 
     Args:
         texto: Texto da história para narrar
         arquivo_saida: Caminho do arquivo MP3 de saída
-        texto_completo_para_deteccao: Texto completo (descrição + história) para detectar idioma
 
     Returns:
         list: Lista de dicts com timestamps onde aparecem CTAs
     """
     print("   -> Gerando áudio e detectando CTAs...")
-
-    # Detecta idioma e seleciona voz nativa
-    # Usa texto_completo se fornecido (mais preciso), senão usa apenas a história
-    texto_deteccao = texto_completo_para_deteccao if texto_completo_para_deteccao else texto
-    voz_selecionada = detectar_idioma_texto(texto_deteccao)
 
     # Palavras-chave para detectar CTA
     cta_palavras = ['inscreva-se', 'inscreva', 'se inscrever', 'inscrição', 'inscrever']
@@ -355,8 +201,8 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida, texto_completo_para_d
             })
             pos += len(cta)
 
-    # Gera o áudio com a voz detectada
-    comunicacao = edge_tts.Communicate(texto, voz_selecionada)
+    # Gera o áudio
+    comunicacao = edge_tts.Communicate(texto, VOZ)
     await comunicacao.save(arquivo_saida)
 
     # Calcula duração do áudio
@@ -694,17 +540,10 @@ async def criar_video_longo():
 
     print(f"\n🎙️  2. Gerando narração (apenas do bloco HISTÓRIA)...")
 
-    # Texto combinado para detecção de idioma (DESCRIÇÃO + HISTÓRIA)
-    # Ignora TÍTULO para evitar influência de marcadores em PT-BR
-    texto_para_deteccao = descricao + " " + historia
-    print(f"   ℹ️  Detectando idioma usando: DESCRIÇÃO + HISTÓRIA ({len(texto_para_deteccao)} caracteres)")
-
     if ATIVAR_GIF_CTA:
-        timestamps_cta = await gerar_audio_com_timestamps(historia, NOME_AUDIO, texto_para_deteccao)
+        timestamps_cta = await gerar_audio_com_timestamps(historia, NOME_AUDIO)
     else:
-        # Detecta idioma e seleciona voz nativa
-        voz_selecionada = detectar_idioma_texto(texto_para_deteccao)
-        comunicacao = edge_tts.Communicate(historia, voz_selecionada)
+        comunicacao = edge_tts.Communicate(historia, VOZ)
         await comunicacao.save(NOME_AUDIO)
         timestamps_cta = []
 
