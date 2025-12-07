@@ -263,9 +263,10 @@ def parse_historia_txt(caminho_arquivo):
 def detectar_idioma_texto(texto):
     """
     Detecta o idioma do texto e retorna a voz nativa correspondente.
+    IMPORTANTE: Ignora marcadores (=== ... ===) para evitar detecção errada.
 
     Args:
-        texto: Texto da história para detectar idioma
+        texto: Texto da história para detectar idioma (preferencialmente descrição + história)
 
     Returns:
         str: Nome da voz Edge-TTS apropriada
@@ -276,8 +277,21 @@ def detectar_idioma_texto(texto):
         return VOZ_PADRAO
 
     try:
-        # Detecta idioma do texto
-        idioma_detectado = detect(texto)
+        # Limpa marcadores residuais (=== ALGO ===) que podem estar em PT-BR
+        import re
+        texto_limpo = re.sub(r'===\s*[^=]+\s*===', '', texto)
+
+        # Remove múltiplos espaços/quebras de linha
+        texto_limpo = ' '.join(texto_limpo.split())
+
+        # Verifica se sobrou texto suficiente
+        if len(texto_limpo) < 20:
+            print(f"   ⚠️  Texto muito curto para detecção confiável")
+            print(f"   🎙️  Usando voz padrão: {VOZ_PADRAO}")
+            return VOZ_PADRAO
+
+        # Detecta idioma do texto limpo
+        idioma_detectado = detect(texto_limpo)
 
         # Busca voz correspondente ao idioma
         voz = VOZES_POR_IDIOMA.get(idioma_detectado, VOZ_PADRAO)
@@ -298,7 +312,7 @@ def detectar_idioma_texto(texto):
 # FUNÇÕES DE ÁUDIO
 # ============================================================================
 
-async def gerar_audio_com_timestamps(texto, arquivo_saida):
+async def gerar_audio_com_timestamps(texto, arquivo_saida, texto_completo_para_deteccao=None):
     """
     Gera áudio da narração e detecta timestamps de CTAs (inscreva-se).
     Detecta automaticamente o idioma do texto e usa a voz nativa.
@@ -306,6 +320,7 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
     Args:
         texto: Texto da história para narrar
         arquivo_saida: Caminho do arquivo MP3 de saída
+        texto_completo_para_deteccao: Texto completo (descrição + história) para detectar idioma
 
     Returns:
         list: Lista de dicts com timestamps onde aparecem CTAs
@@ -313,7 +328,9 @@ async def gerar_audio_com_timestamps(texto, arquivo_saida):
     print("   -> Gerando áudio e detectando CTAs...")
 
     # Detecta idioma e seleciona voz nativa
-    voz_selecionada = detectar_idioma_texto(texto)
+    # Usa texto_completo se fornecido (mais preciso), senão usa apenas a história
+    texto_deteccao = texto_completo_para_deteccao if texto_completo_para_deteccao else texto
+    voz_selecionada = detectar_idioma_texto(texto_deteccao)
 
     # Palavras-chave para detectar CTA
     cta_palavras = ['inscreva-se', 'inscreva', 'se inscrever', 'inscrição', 'inscrever']
@@ -677,11 +694,16 @@ async def criar_video_longo():
 
     print(f"\n🎙️  2. Gerando narração (apenas do bloco HISTÓRIA)...")
 
+    # Texto combinado para detecção de idioma (DESCRIÇÃO + HISTÓRIA)
+    # Ignora TÍTULO para evitar influência de marcadores em PT-BR
+    texto_para_deteccao = descricao + " " + historia
+    print(f"   ℹ️  Detectando idioma usando: DESCRIÇÃO + HISTÓRIA ({len(texto_para_deteccao)} caracteres)")
+
     if ATIVAR_GIF_CTA:
-        timestamps_cta = await gerar_audio_com_timestamps(historia, NOME_AUDIO)
+        timestamps_cta = await gerar_audio_com_timestamps(historia, NOME_AUDIO, texto_para_deteccao)
     else:
         # Detecta idioma e seleciona voz nativa
-        voz_selecionada = detectar_idioma_texto(historia)
+        voz_selecionada = detectar_idioma_texto(texto_para_deteccao)
         comunicacao = edge_tts.Communicate(historia, voz_selecionada)
         await comunicacao.save(NOME_AUDIO)
         timestamps_cta = []
