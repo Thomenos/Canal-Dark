@@ -331,9 +331,12 @@ def autenticar_youtube():
     """Autentica no YouTube usando OAuth2."""
     creds = None
 
+    # Token específico para o canal italiano
+    TOKEN_FILE = 'token_canal_italiano.pickle'
+
     # Verifica se já existe token salvo
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, 'rb') as token:
             creds = pickle.load(token)
 
     # Se não há credenciais válidas, faz login
@@ -351,7 +354,7 @@ def autenticar_youtube():
             creds = flow.run_local_server(port=0)
 
         # Salva token para próxima vez
-        with open('token.pickle', 'wb') as token:
+        with open(TOKEN_FILE, 'wb') as token:
             pickle.dump(creds, token)
 
     return build('youtube', 'v3', credentials=creds)

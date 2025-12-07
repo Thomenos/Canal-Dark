@@ -1,6 +1,8 @@
 # Credenciais e tokens (NUNCA COMMITAR!)
 client_secret.json
 token.pickle
+token_canal_portugues.pickle
+token_canal_italiano.pickle
 *.json
 
 # Vídeos e áudios gerados
