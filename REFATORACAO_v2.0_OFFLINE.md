@@ -210,6 +210,25 @@ limpar_arquivos_processados()  # Deleta intro + background
 arquivar_historia()             # Move historia.txt para arquivados/
 ```
 
+### **5. Detecção Automática de Idioma** 🆕
+
+```python
+# Detecta automaticamente o idioma da história e usa voz nativa!
+# Suporta 27+ idiomas (PT, EN, ES, FR, DE, IT, RU, JA, ZH, KO, AR, etc)
+
+# O sistema detecta o idioma e escolhe a voz apropriada:
+# - Português → pt-BR-AntonioNeural
+# - Inglês → en-US-GuyNeural
+# - Espanhol → es-ES-AlvaroNeural
+# - Japonês → ja-JP-KeitaNeural
+# ... e muito mais!
+
+# Para desativar:
+DETECTAR_IDIOMA_AUTOMATICO = False  # Usa sempre VOZ_PADRAO (PT-BR)
+```
+
+**📖 Documentação completa:** Veja `DETECCAO_IDIOMA.md`
+
 ---
 
 ## 📊 **COMPARAÇÃO DE CÓDIGO**
